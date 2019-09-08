@@ -4,21 +4,33 @@ __lua__
 
 origin = {
  x = 64,
- y = 64
+ y = 64,
+ xspd = 5,
+ yspd = 5 
 }
 function move_stuff(n)
  if btn(0) then 
-  n.x -= 1
+  n.x -= n.xspd * dsp 
  end
  if btn(1) then
-  n.x += 1
+  n.x += n.xspd * dsp
  end
  if btn(2) then
-  n.y -= 1
+  n.y -= n.yspd * dsp
  end
  if btn(3) then
-  n.y += 1
+  n.y += n.yspd * dsp 
  end
+ ix = btn(0) or btn(1)
+ iy = btn(2) or btn(3)
+ diag = ix and iy
+ if diag then
+  dsp = n.xspd/(sqrt(n.xspd*n.xspd + n.yspd*n.yspd)) 
+ else
+  dsp = 1
+ end
+ print(dsp)
+ 
 end
 
 function _update()
