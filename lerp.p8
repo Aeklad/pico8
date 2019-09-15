@@ -5,10 +5,18 @@ __lua__
 origin = {
  x = 64,
  y = 64,
- xspd = 5,
- yspd = 5 
+ xspd = 1,
+ yspd = 1 
 }
 function move_stuff(n)
+ ix = btn(0) or btn(1)
+ iy = btn(2) or btn(3)
+ diag = ix and iy
+ if diag then
+  dsp = n.xspd/(sqrt(n.xspd*n.xspd + n.yspd*n.yspd)) 
+ else
+  dsp = 1
+ end
  if btn(0) then 
   n.x -= n.xspd * dsp 
  end
@@ -21,14 +29,7 @@ function move_stuff(n)
  if btn(3) then
   n.y += n.yspd * dsp 
  end
- ix = btn(0) or btn(1)
- iy = btn(2) or btn(3)
- diag = ix and iy
- if diag then
-  dsp = n.xspd/(sqrt(n.xspd*n.xspd + n.yspd*n.yspd)) 
- else
-  dsp = 1
- end
+
  print(dsp)
  
 end
@@ -36,7 +37,7 @@ end
 function _update()
  cls()
  move_stuff(origin)
- circ(origin.x,origin.y,11)
+ circ(origin.x,origin.y,14)
 end
 
 __gfx__
