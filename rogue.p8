@@ -4,7 +4,9 @@ __lua__
 p = {
 	x = 16,
 	y = 16,
-	sp = 240
+	sp = 240,
+	flp = 1,
+	spd = 1
 	}
 	
 	poke(0x5f2c, 3)
@@ -17,6 +19,24 @@ function _update()
 	cls()
 	t += 1
 	
+	if btn(0) then
+		p.x -= p.spd
+	end
+
+	
+	if btn(1) then
+		p.x += p.spd
+	end
+	
+	if btn(2) then
+		p.y -= p.spd
+	end
+
+
+	if btn(3) then
+		p.y += p.spd
+	end
+
 	if t % 5 == 0 then
 		fc += 1
 		
@@ -26,7 +46,7 @@ function _update()
 		
 	end	
 	
-	spr(p.sp + fc, p.x, p.y)
+	spr(p.sp + fc, p.x, p.y,1 , 1, 10)
 end	
 __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
