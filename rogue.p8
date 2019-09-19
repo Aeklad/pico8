@@ -2,43 +2,59 @@ pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
 function _init()
-	_upd=update_game
-	_drw=draw_game
+ t=0
+ p_ani={240,241,242,243}
+ dirx={-1,1,0,0}
+ diry={0,0,-1,1}
+ _upd=update_game
+ _drw=draw_game
  startgame()
 end
 
 function _update()
-	_upd()
+ _upd()
 end
 
 function _draw()
-	_drw()
+ _drw()
 end
 
 function startgame()
-	t=0
-	p_ani={240,241,242,243}
  p_x=1
  p_y=6
+ p_ox =0
+ p_oy =0
 end
 -->8
 --updates
- function update_game()
- 	t+=1
-  if btnp(⬅️) then
-   p_x-=1
-  end
-  if btnp(➡️) then
-   p_x+=1
-  end
-  if btnp(⬆️) then
-   p_y-=1
-  end
-  if btnp(⬇️) then
-   p_y+=1
+function update_game()
+ t+=1
+ for i=0,3 do
+  if btnp(i) then
+   p_x+=dirx[i+1]
+   p_y+=diry[i+1]
+   _upd=update_pturn
+   return
   end
  end
- 
+end
+function update_pturn()
+ if p_ox>0 then
+  p_ox-=1
+ end
+ if p_ox<0 then
+  p_ox+=1
+ end
+ if p_oy>0 then
+  p_oy-=1
+ end
+ if p_oy<0 then
+  p_oy+=1
+ end
+ if p_ox==0 and p_oy==0 then
+  _upd=update_game
+ end
+end
  function update_gameover()
  end
 -->8
@@ -46,7 +62,7 @@ end
  function draw_game()
  cls(0)
  map()
- draw_spr(get_frame(p_ani),p_x*8,p_y*8)	
+ draw_spr(get_frame(p_ani),p_x*8+p_ox,p_y*8+p_oy)	
  	
  end
  
