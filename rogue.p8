@@ -27,12 +27,16 @@ function startgame()
 end
 -->8
 --updates
+
 function update_game()
  t+=1
  for i=0,3 do
   if btnp(i) then
-   p_x+=dirx[i+1]
-   p_y+=diry[i+1]
+  	local dx,dy=dirx[i+1],diry[i+1]
+   p_x+=dx
+   p_y+=dy
+   p_ox=-dx*8
+   p_oy=-dy*8
    _upd=update_pturn
    return
   end
@@ -59,6 +63,7 @@ end
  end
 -->8
 --draws
+
  function draw_game()
  cls(0)
  map()
@@ -70,6 +75,7 @@ end
  end
 -->8
 --tools
+
 function get_frame(_ani)
 	return _ani[flr(t/8)%#_ani+1]
 end
