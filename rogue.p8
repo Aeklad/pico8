@@ -11,7 +11,8 @@ function _init()
  startgame()
 end
 
-function _update()
+function _update60()
+ t+=1
  _upd()
 end
 
@@ -22,40 +23,35 @@ end
 function startgame()
  p_x=1
  p_y=6
- p_ox =0
- p_oy =0
+ p_ox=0
+ p_oy=0
+ p_sox=0
+ p_soy=0
+
+ p_t=0
 end
 -->8
 --updates
 
 function update_game()
- t+=1
  for i=0,3 do
   if btnp(i) then
   	local dx,dy=dirx[i+1],diry[i+1]
    p_x+=dx
    p_y+=dy
-   p_ox=-dx*8
-   p_oy=-dy*8
+   p_sox,p_soy=-dx*8,-dy*8
+   p_ox,p_oy=p_sox,p_soy
+   p_t=0
    _upd=update_pturn
    return
   end
  end
 end
 function update_pturn()
- if p_ox>0 then
-  p_ox-=1
- end
- if p_ox<0 then
-  p_ox+=1
- end
- if p_oy>0 then
-  p_oy-=1
- end
- if p_oy<0 then
-  p_oy+=1
- end
- if p_ox==0 and p_oy==0 then
+ p_t=min(p_t+0.125,1)
+ p_ox=p_sox*(1-p_t)
+ p_oy=p_soy*(1-p_t)
+ if p_t==1 then
   _upd=update_game
  end
 end
@@ -67,6 +63,7 @@ end
  function draw_game()
  cls(0)
  map()
+ print(p_t,80,80)
  draw_spr(get_frame(p_ani),p_x*8+p_ox,p_y*8+p_oy)	
  	
  end
@@ -77,7 +74,7 @@ end
 --tools
 
 function get_frame(_ani)
-	return _ani[flr(t/8)%#_ani+1]
+	return _ani[flr(t/15)%#_ani+1]
 end
 
 function draw_spr(_spr,_x,_y,_c)
