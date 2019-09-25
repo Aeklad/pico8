@@ -7,6 +7,8 @@ function _init()
  dirx={-1,1,0,0,1,1,-1,-1}
  diry={0,0,-1,1,-1,1,1,-1}
  mob_ani={240,192}
+ mob_atk={1,1}
+ mob_hp={5,2}
  _upd=update_game
  _drw=draw_game
  startgame()
@@ -15,6 +17,7 @@ end
 function _update60()
  t+=1
  _upd()
+ dofloats()
 end
 
 function _draw()
@@ -29,13 +32,19 @@ function startgame()
  mob={}
  p_mob=addmob(1,1,1)
  addmob(2,3,2)
+ addmob(2,9,2)
+ addmob(2,11,5)
+ addmob(2,11,11)
+ addmob(2,4,12)
+ addmob(2,2,10)
 
  p_t=0
  wind={}
+ float={}
  talkwind = nil
 end
 -->8
---updates
+--updates tab 1
 
 function update_game()
 
@@ -67,19 +76,6 @@ function update_gameover()
  --gameover
 end
 
-function mov_walk(mob,at)
- mob.ox=mob.sox*(1-at)
- mob.oy=mob.oy*(1-at)
-end
-
-function mov_bump(mob,at)
- local tme=at
- if at>0.5 then
-  tme=1-at
- end
- mob.ox=mob.sox*tme
- mob.oy=mob.soy*tme
-end
 function dobuttbuff()
  if buttbuff==-1 then
   buttbuff=getbutt()
@@ -104,27 +100,37 @@ function dobutt(butt)
 end
  
 -->8
---draws
+--draws tab 2
 
  function draw_game()
   cls(0)
   map()
   for m in all(mob) do
-   draw_spr(get_frame(m.ani),m.x*8+m.ox,m.y*8+m.oy,0,m.flp)	
+   local col=10
+   if m.flash>0 then
+    m.flash-=1
+    col=7
+   end
+   draw_spr(get_frame(m.ani),m.x*8+m.ox,m.y*8+m.oy,col,m.flp)	
+  end
+  for f in all(float) do
+   oprint8(f.txt,f.x,f.y,f.c,0)
   end
  end
  
  function draw_gameover()
  end
 -->8
---tools
+--tools tab 3
 
 function get_frame(_ani)
 	return _ani[flr(t/15)%#_ani+1]
 end
 
 function draw_spr(_spr,_x,_y,_c,_flip)
+ pal(11,_c)
  spr(_spr,_x,_y,1,1,_flip)
+ pal()
 end
 
 function rectfill2(_x,_y,_w,_h,_c)
@@ -138,33 +144,21 @@ function oprint8(_t,_x,_y,_c,_c2)
  print(_t,_x,_y,_c)
 end
 -->8
---gameplay
+--gameplay tab 4
 function moveplayer(dx,dy)
  local destx,desty=p_mob.x+dx,p_mob.y+dy
  local tle=mget(destx,desty)
 
- if dx<0 then
-  p_mob.flp=true
- elseif dx>0 then
-  p_mob.flp=false
- end
-
  if iswalkable(destx,desty,"checkmobs") then
   sfx(63)
-  p_mob.x+=dx
-  p_mob.y+=dy
-  p_mob.sox,p_mob.soy=-dx*8,-dy*8
-  p_mob.ox,p_mob.oy=p_mob.sox,p_mob.soy
+  mobwalk(p_mob,dx,dy)
   p_t=0
   _upd=update_pturn
-  p_mob.mov=mov_walk
  else
   --not walkable
-  p_mob.sox,p_mob.soy=dx*8,dy*8
-  p_mob.ox,p_mob.oy=0,0
+  mobbump(p_mob,dx,dy)
   p_t=0
   _upd=update_pturn
-  p_mob.mov=mov_bump
 
   local mob=getmob(destx,desty)
   if mob==false then
@@ -172,6 +166,7 @@ function moveplayer(dx,dy)
     trig_bump(tle,destx,desty)
    end
   else
+   sfx(58)
    hitmob(p_mob,mob)
   end
  end
@@ -228,10 +223,17 @@ function inbounds(x,y)
  return not(x<0 or y<0 or x>15 or y>15)
 end
 
-function hitmob(atk_m,def_m)
+function hitmob(atkm,defm)
+ local dmg=atkm.atk
+ defm.hp-=dmg
+ defm.flash=10
+ addfloat("-"..dmg,defm.x*8,defm.y*8,9)
+ if defm.hp<=0 then
+  del(mob,defm)
+ end
 end
 -->8
---ui
+--ui tab 5
 
 function addwind(_x,_y,_w,_h,_txt)
  local w={x=_x,
@@ -293,9 +295,25 @@ function showmsg(txt)
  talkwind.butt=true
 end
 
+function addfloat(_txt,_x,_y,_c)
+ add(float,{txt=_txt,x=_x,y=_y,c=_c,ty=_y-10,t=0})
+end
+
+function dofloats()
+ for f in all(float) do
+  f.y+=(f.ty-f.y)/10
+  f.t+=1
+  if f.t>70 then
+   del(float,f)
+  end
+ end
+end
+ 
+
+
 
 -->8
---mobs
+--mobs tab 6
 
 function addmob(typ,mx,my)
  local m={
@@ -307,7 +325,11 @@ function addmob(typ,mx,my)
   soy=0,
   flp=false,
   mov=nil,
-  ani={}
+  ani={},
+  flash=0,
+  hp=mob_hp[typ],
+  hpmax=mob_hp[typ],
+  atk=mob_atk[typ]
  }
  for i=0,3 do
   add(m.ani,mob_ani[typ]+i)
@@ -315,6 +337,45 @@ function addmob(typ,mx,my)
  add(mob,m)
  return m
 end
+
+function mobwalk(mb,dx,dy)
+ mb.x+=dx
+ mb.y+=dy
+ mobflip(mb,dx)
+ mb.sox, mb.soy=-dx*8,-dy*8
+ mb.ox, mb.oy= mb.sox, mb.soy
+ mb.mov=mov_walk
+end
+
+function mobbump(mb,dx,dy)
+   mobflip(mb,dx)
+   mb.sox, mb.soy=dx*8,dy*8
+   mb.ox, mb.oy=0,0
+   mb.mov=mov_bump
+end
+function mobflip(mb,dx)
+ 
+ if dx<0 then
+   mb.flp=true
+ elseif dx>0 then
+   mb.flp=false
+ end
+end
+
+function mov_walk(mob,at)
+ mob.ox=mob.sox*(1-at)
+ mob.oy=mob.oy*(1-at)
+end
+
+function mov_bump(mob,at)
+ local tme=at
+ if at>0.5 then
+  tme=1-at
+ end
+ mob.ox=mob.sox*tme
+ mob.oy=mob.soy*tme
+end
+
 __gfx__
 0000000000000000770677601011011000000000000000002aaa9200000000007f00044000000000000000005555555000aa9000242424205555000055555550
 000000000000000067067770110000000000000000000000022222000000000007f44400555555000000000050101050aa442990442424200000000055555550
@@ -650,8 +711,8 @@ __sfx__
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000300000e250132201a2301c2501b2601a25006220042500b2000820000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00020000200501b040170400103000020086200661001610000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 000200003e6003e6103e61032000390102f000300001b610176100561004610036100361003610006100261001610016100060000600006001f000200001e0001e0001c0001b0001b0001a000190001700016000
 000600000442003420024300143002410014100040000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 000400000051000540005000150000500095200951000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
