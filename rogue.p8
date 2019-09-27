@@ -85,7 +85,7 @@ function update_aiturn()
  dobuttbuff() 
  p_t=min(p_t+.125,1)
  for m in all(mob) do
-  if m!=p_mob then  
+  if m!=p_mob and m.mov then  
    m.mov(m,p_t)
   end
  end
@@ -407,17 +407,30 @@ end
 function doai()
  for m in all(mob) do
   if m!=p_mob then  
-   local bdst,bx,by=999,0,0
-   for i=1,4 do
-    local dx,dy=dirx[i],diry[i]
-    local dst=dist(m.x+dx,m.y+dy,p_mob.x,p_mob.y)
-    if dst<bdst then
-     bdst,bx,by=dst,dx,dy
+   m.mov=nil
+   if dist(m.x,m.y,p_mob.x,p_mob.y)==1 then
+    --attack player
+    dx,dy=p_mob.x-m.x,p_mob.y-m.y
+    mobbump(m,dx,dy)
+    hitmob(m,p_mob)
+    sfx(57)
+   else
+    --move toward player
+    local bdst,bx,by=999,0,0
+    for i=1,4 do
+     local dx,dy=dirx[i],diry[i]
+     local tx,ty=m.x+dx,m.y+dy
+     if iswalkable(tx,ty,"checkmobs") then
+      local dst=dist(m.x+dx,m.y+dy,p_mob.x,p_mob.y)
+      if dst<bdst then
+       bdst,bx,by=dst,dx,dy
+      end
+     end
     end
+    mobwalk(m,bx,by)
+    _upd=update_aiturn
+    p_t=0
    end
-  mobwalk(m,bx,by)
-  _upd=update_aiturn
-  p_t=0
   end
  end
 end
