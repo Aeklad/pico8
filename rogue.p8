@@ -10,6 +10,8 @@ function _init()
  mob_atk={1,1}
  mob_hp={5,2}
  mob_los={4,4}
+
+ itm_name={"broad sword","leather armor","red potion"}
  debug={}
  startgame()
 end
@@ -49,9 +51,16 @@ function startgame()
  end
 
  p_t=0
+ inv,eqp={},{}
+ --eqp[1] - weapon
+ --eqp[2] - armor
+ --inv[1-6] - inventory
+ takeitem(1)
+ takeitem(2)
+ takeitem(3)
  wind={}
  float={}
- fog=blankmap(1)
+ fog=blankmap(0)
  talkwind = nil
  hpwind=addwind(5,5,28,13,{})
  _upd=update_game
@@ -72,8 +81,24 @@ function update_game()
   dobutt(buttbuff)
   buttbuff=-1
  end
+end
 
-
+function update_inv()
+ --inventory
+ move_mnu(invwind)
+ if btnp(4) then
+  _upd=update_game
+  invwind.dur=0
+  statwind.dur=0
+ end
+end
+ 
+function move_mnu(wnd)
+ if btnp(2) then
+  wnd.cur=max(1,wnd.cur-1)
+ elseif btnp(3) then
+  wnd.cur=min(#wnd.txt,wnd.cur+1)
+ end
 end
 
 function update_pturn()
@@ -87,6 +112,7 @@ function update_pturn()
   if checkend() then
    doai()
   end
+ calcdist(p_mob.x,p_mob.y)
  end
 end
 function update_aiturn()
@@ -130,9 +156,10 @@ end
 
 function dobutt(butt)
  if butt<0 then return end
- 
  if butt<4 then
   moveplayer(dirx[butt+1],diry[butt+1])
+ elseif butt==5 then
+  showinv()
  end
 end
  
@@ -167,8 +194,9 @@ function draw_game()
  for f in all(float) do
   oprint8(f.txt,f.x,f.y,f.c,0)
  end
-end
  
+end
+
 function drawmob(m)
   local col=7
   if m.flash>0 then
@@ -260,6 +288,10 @@ function blankmap(_dflt)
  return ret
 end
 
+function getrnd(arr)
+ return arr[1+flr(rnd(#arr))]
+end
+
 -->8
 --gameplay tab 4
 function moveplayer(dx,dy)
@@ -305,11 +337,11 @@ function trig_bump(tle,destx,desty)
   elseif tle==6 then
    --stone tablet
    if destx==5 and desty ==2 then
-    showmsg({'  '..'welcome to gip','','explore','take well care','for the path',' is dangerous'})
+    showtalk({'  '..'welcome to gip','','explore','take well care','for the path',' is dangerous'})
    elseif destx==6 and desty ==10 then
-    showmsg({'  '..'oh man its scary','what was that?'})
+    showtalk({'  '..'oh man its scary','what was that?'})
    elseif destx==14 and desty ==5 then
-    showmsg({'  '..'pretty cool bro','','find stuff','like swords','or garbage','or maybe gold'})
+    showtalk({'  '..'pretty cool bro','','find stuff','like swords','or garbage','or maybe gold'})
    end
   end
 end
@@ -390,11 +422,11 @@ function los(x1,y1,x2,y2)
   e2,frst=err+err,false
   if e2>-dy then
    err-=dy
-   x1=x1+sx
+   x1+=sx
   end
   if e2<dx then
    err+=dx
-   y1=y1+sy
+   y1+=sy
   end
  end
  return true
@@ -423,6 +455,29 @@ function unfogtile(x,y)
  end
 end
 
+function calcdist(tx,ty)
+ local cand,step={},0
+ distmap=blankmap(-1)
+ add(cand,{x=tx,y=ty})
+ distmap[tx][ty]=0
+ repeat
+ step+=1
+ candnew={}
+ for c in all(cand) do
+  for d=1,4 do
+   local dx=c.x+dirx[d]
+   local dy=c.y+diry[d]
+   if inbounds(dx,dy) and distmap[dx][dy]==-1 then
+    distmap[dx][dy]=step
+    if iswalkable(dx,dy) then
+     add(candnew,{x=dx,y=dy})
+    end
+   end
+  end
+ end
+ cand=candnew
+until #cand==0
+end
 -->8
 --ui tab 5
 
@@ -445,10 +500,19 @@ function drawind()
   wx+=4
   wy+=4
   clip(wx,wy,ww-8,wh-8)
+  if w.curmode then
+   wx+=6
+  end
 
   for i=1,#w.txt do
-   local txt=w.txt[i]
-   print(txt,wx,wy,6)
+   local txt,c=w.txt[i],6
+   if w.col and w.col[i] then
+    c=w.col[i]
+   end
+   print(txt,wx,wy,c)
+   if i==w.cur then
+    spr(255,wx-5+sin(time()),wy)
+   end
    wy+=6
   end
 
@@ -475,13 +539,13 @@ function drawind()
  end
 end
 
-function showmsg1(txt,dur)
+function showmsg(txt,dur)
  local wid=(#txt+2)*4+7
  local w=addwind(63-wid/2,50,wid,13,{txt})
  w.dur=dur
 end
 
-function showmsg(txt)
+function showtalk(txt)
  talkwind=addwind(16,50,94,#txt*6+7,txt)
  talkwind.butt=true
 end
@@ -509,9 +573,47 @@ function dohpwind()
  hpwind.y+=(hpy-hpwind.y)/5
 end
 
+function showinv()
+ local txt,col={},{}
+ _upd=update_inv
+ for i=1,2 do
+  local itm,eqt=eqp[i]
+  if itm then
+   eqt=itm_name[itm]
+   add(col,6)
+  else
+   if i==1 then
+    eqt="[weapon]"
+   else
+    eqt="[armor]"
+   end
+   add(col,5)
+  end
+  add(txt,eqt)
+ end
+ add(txt,"…………………………")
+ add(col,6)
+ for i=1,6 do
+  local itm=inv[i]
+  if itm then
+   add(txt,itm_name[itm])
+   add(col,6)
+  else
+   add(txt,"...")
+   add(col,5)
+  end
+ end
+ invwind=addwind(5,17,84,62,txt)
+ invwind.curmode=true
+ invwind.cur=3
+ invwind.col=col
+
+ statwind=addwind(5,5,84,13,{"atk: 1 def: 1"})
+
+end
 
 -->8
---mobs tab 6
+--mobs and items tab 6
 
 function addmob(typ,mx,my)
  local m={
@@ -612,29 +714,37 @@ function ai_attac(m)
   return true
  else
   --move toward player
- if cansee(m,p_mob) then
-  m.tx,m.ty=p_mob.x,p_mob.y
- end
- if m.x==m.tx and m.y==m.ty then
-  --de aggro
-  m.task=ai_wait
-  addfloat("?",m.x*8+2,m.y*8,10)
+  if cansee(m,p_mob) then
+   m.tx,m.ty=p_mob.x,p_mob.y
+  end
+  if m.x==m.tx and m.y==m.ty then
+   --de aggro
+   m.task=ai_wait
+   addfloat("?",m.x*8+2,m.y*8,10)
 
- else
-  local bdst,bx,by=999,0,0
-  for i=1,4 do
-   local dx,dy=dirx[i],diry[i]
-   local tx,ty=m.x+dx,m.y+dy
-   if iswalkable(tx,ty,"checkmobs") then
-    local dst=dist(m.x+dx,m.y+dy,m.tx,m.ty)
-    if dst<bdst then
-     bdst,bx,by=dst,dx,dy
+  else
+   local bdst,cand=999,{}
+   calcdist(m.tx,m.ty)
+   for i=1,4 do
+    local dx,dy=dirx[i],diry[i]
+    local tx,ty=m.x+dx,m.y+dy
+    if iswalkable(tx,ty,"checkmobs") then
+     local dst=distmap[tx][ty]
+     if dst<bdst then
+      cand={}
+      bdst=dst
+     end
+     if dst==bdst then
+      add(cand,{x=dx,y=dy})
+     end
     end
    end
+   if #cand>0 then
+    local c=getrnd(cand)
+    mobwalk(m,c.x,c.y)
+    return true
+   end
   end
-  mobwalk(m,bx,by)
-  return true
- end
  end
  return false
 end
@@ -642,6 +752,25 @@ end
 function cansee(m1,m2)
  return dist(m1.x,m1.y,m2.x,m2.y)<=m1.los and los(m1.x,m1.y,m2.x,m2.y)
 end
+-------------------------------------------------------
+-- items
+-------------------------------------------------------
+function takeitem(itm)
+ local i=freeinvslot()
+ if i==0 then return false end
+ inv[i]=itm
+ return true
+end
+
+function freeinvslot()
+ for i=1,6 do
+  if not inv[i] then
+   return i
+  end
+ end
+ return 0
+end
+
 
 __gfx__
 00000000000000005555555000000000000000000000000044444000000000004400044000000000000000001111111000444000444444404444000011111110
@@ -764,11 +893,11 @@ __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00770000000000000007700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00700000000770000007000000077000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00070700000700000000700000070000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00700700007070700000070000007070000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-07070700070700700077070000770070000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00770000000000000007700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000070000000
+00700000000770000007000000077000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000077000000
+00070700000700000000700000070000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000077700000
+00700700007070700000070000007070000000000000000000000000000000000000000000000000000000000000000000000000000000000000000077000000
+07070700070700700077070000770070000000000000000000000000000000000000000000000000000000000000000000000000000000000000000070000000
 00070000007700700707070007077070000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00070000007070000007000000707000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __label__
@@ -910,7 +1039,7 @@ __map__
 02010201010601020a0101010201010200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 02010201010101020101020d020d020200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0201010101010102c00202010201010200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0201010101010102020202020202060200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0201010101010101020202020202060200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 020f010101010101010101010101c00200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 020202020d020d0202020202020d020200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 02c0010d01010101020101010101010200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
