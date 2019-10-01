@@ -12,6 +12,7 @@ function _init()
  mob_los={4,4}
 
  itm_name={"broad sword","leather armor","red potion"}
+	itm_type={"wep","arm","fud","thr"}
  debug={}
  startgame()
 end
@@ -85,20 +86,32 @@ end
 
 function update_inv()
  --inventory
- move_mnu(invwind)
+ move_mnu(curwind)
  if btnp(4) then
+		if curwind==invwind then
   _upd=update_game
   invwind.dur=0
   statwind.dur=0
+	elseif curwind==usewind then
+		curwind.dur=0
+		curwind=invwind
+	end
+	elseif btnp(5) then
+		if curwind==invwind then
+			showuse()
+	elseif curwind==usewind then
+		--use window confirme
+		end
  end
 end
  
 function move_mnu(wnd)
  if btnp(2) then
-  wnd.cur=max(1,wnd.cur-1)
+  wnd.cur-=1
  elseif btnp(3) then
-  wnd.cur=min(#wnd.txt,wnd.cur+1)
+  wnd.cur+=1
  end
+	wnd.cur=(wnd.cur-1)%#wnd.txt+1
 end
 
 function update_pturn()
@@ -500,7 +513,7 @@ function drawind()
   wx+=4
   wy+=4
   clip(wx,wy,ww-8,wh-8)
-  if w.curmode then
+  if w.cur then
    wx+=6
   end
 
@@ -574,19 +587,15 @@ function dohpwind()
 end
 
 function showinv()
- local txt,col={},{}
+ local txt,col,itm,eqt={},{}
  _upd=update_inv
  for i=1,2 do
-  local itm,eqt=eqp[i]
+  itm=eqp[i]
   if itm then
    eqt=itm_name[itm]
    add(col,6)
   else
-   if i==1 then
-    eqt="[weapon]"
-   else
-    eqt="[armor]"
-   end
+			eqt=i==1 and "[weapon]" or "[armor]"
    add(col,5)
   end
   add(txt,eqt)
@@ -604,12 +613,19 @@ function showinv()
   end
  end
  invwind=addwind(5,17,84,62,txt)
- invwind.curmode=true
  invwind.cur=3
  invwind.col=col
 
  statwind=addwind(5,5,84,13,{"atk: 1 def: 1"})
+	curwind=invwind
 
+end
+
+function showuse()
+	local itm=invwind<3 and eqp[i] or inv[i-3]
+	usewind=addwind(84,invwind.cur*6+11,36,25,{"eqp","throw","trash",})
+	usewind.cur=1
+	curwind=usewind
 end
 
 -->8
