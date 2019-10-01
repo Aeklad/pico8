@@ -11,8 +11,8 @@ function _init()
  mob_hp={5,2}
  mob_los={4,4}
 
- itm_name={"broad sword","leather armor","red potion"}
-	itm_type={"wep","arm","fud","thr"}
+ itm_name={"broad sword","leather armor","red bean paste","ninja star"}
+ itm_type={"wep","arm","fud","thr"}
  debug={}
  startgame()
 end
@@ -59,6 +59,7 @@ function startgame()
  takeitem(1)
  takeitem(2)
  takeitem(3)
+ takeitem(4)
  wind={}
  float={}
  fog=blankmap(0)
@@ -97,7 +98,7 @@ function update_inv()
 		curwind=invwind
 	end
 	elseif btnp(5) then
-		if curwind==invwind then
+		if curwind==invwind and invwind.cur!=3 then
 			showuse()
 	elseif curwind==usewind then
 		--use window confirme
@@ -622,12 +623,23 @@ function showinv()
 end
 
 function showuse()
-	local itm=invwind<3 and eqp[i] or inv[i-3]
-	usewind=addwind(84,invwind.cur*6+11,36,25,{"eqp","throw","trash",})
-	usewind.cur=1
-	curwind=usewind
+ local itm=invwind.cur<3 and eqp[invwind.cur] or inv[invwind.cur-3]
+ local typ,txt=itm_type[itm],{}
+ if itm==nil then return end
+ if typ=="wep" or typ=="arm" then
+  add(txt,"equip")
+ end
+ if typ=="fud" then
+  add(txt,"eat")
+ end
+ if typ=="thr" or typ=="fud" then
+  add(txt,"throw")
+ end
+ add(txt,"trash")
+ usewind=addwind(84,invwind.cur*6+11,36,7+#txt*6,txt)
+ usewind.cur=1
+ curwind=usewind
 end
-
 -->8
 --mobs and items tab 6
 
