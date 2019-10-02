@@ -10,9 +10,10 @@ function _init()
  mob_atk={1,1}
  mob_hp={5,2}
  mob_los={4,4}
-
- itm_name={"broad sword","leather armor","red bean paste","ninja star"}
- itm_type={"wep","arm","fud","thr"}
+ itm_name={"broad sword","leather armor","red bean paste","ninja star","rusty sword"}
+ itm_type={"wep","arm","fud","thr","wep"}
+	itm_stat1{2,0,0,0,1}
+	itm_stat2{0,0,0,0,0}
  debug={}
  startgame()
 end
@@ -60,6 +61,7 @@ function startgame()
  takeitem(2)
  takeitem(3)
  takeitem(4)
+ takeitem(5)
  wind={}
  float={}
  fog=blankmap(0)
@@ -102,6 +104,7 @@ function update_inv()
 			showuse()
 	elseif curwind==usewind then
 		--use window confirme
+		triguse()
 		end
  end
 end
@@ -492,6 +495,14 @@ function calcdist(tx,ty)
  cand=candnew
 until #cand==0
 end
+
+function updatestats()
+	local atk=1
+	if itm[1] then
+		atk+=itemstat[eqp[1]]
+	end
+	p_mob.atk=atk
+end
 -->8
 --ui tab 5
 
@@ -617,7 +628,7 @@ function showinv()
  invwind.cur=3
  invwind.col=col
 
- statwind=addwind(5,5,84,13,{"atk: 1 def: 1"})
+ statwind=addwind(5,5,84,13,{"atk:"..p_mob.atk.." 1 def: 1"})
 	curwind=invwind
 
 end
@@ -626,7 +637,7 @@ function showuse()
  local itm=invwind.cur<3 and eqp[invwind.cur] or inv[invwind.cur-3]
  local typ,txt=itm_type[itm],{}
  if itm==nil then return end
- if typ=="wep" or typ=="arm" then
+ if (typ=="wep" or typ=="arm") and invwind.cur>3 then 
   add(txt,"equip")
  end
  if typ=="fud" then
@@ -640,6 +651,42 @@ function showuse()
  usewind.cur=1
  curwind=usewind
 end
+
+function triguse()
+	local verb,i,after=usewind.txt[usewind.cur],invwind.cur,"back"
+ local itm=i<3 and eqp[i] or inv[i-3]
+	if verb=="trash" then
+		if i<3 then
+			eqp[i]=nil
+		else
+			inv[i-3]=nil
+		end
+	elseif verb=="equip" then
+		local slot=2
+		if itm_type[itm]=="wep" then
+			slot=1
+		end
+		inv[i-3]=eqp[slot]
+		eqp[slot]=itm
+	elseif verb=="eat" then
+	elseif verb=="throw" then
+	end
+	updatestats()
+		--?
+		if after=="back"then
+			usewind.dur=0
+			del(wind,invwind)
+			del(wind,statwind)
+			showinv()
+			invwind.cur=i
+		elseif after=="game" then
+			usewind.dur=0
+			invwind.dur=0
+			statwind.dur=0
+			_upd=update_game
+		end
+end
+
 -->8
 --mobs and items tab 6
 
