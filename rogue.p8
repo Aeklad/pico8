@@ -12,8 +12,8 @@ function _init()
  mob_los={4,4}
  itm_name={"broad sword","leather armor","red bean paste","ninja star","rusty sword"}
  itm_type={"wep","arm","fud","thr","wep"}
-	itm_stat1{2,0,0,0,1}
-	itm_stat2{0,0,0,0,0}
+ itm_stat1={2,0,0,0,1}
+ itm_stat2={0,2,0,0,0}
  debug={}
  startgame()
 end
@@ -398,6 +398,8 @@ end
 
 function hitmob(atkm,defm)
  local dmg=atkm.atk
+ local def=defm.defmin+flr(rnd(defm.defmax-defm.defmin+1))
+ dmg-=min(def,dmg)
  defm.hp-=dmg
  defm.flash=10
  addfloat("-"..dmg,defm.x*8,defm.y*8,9)
@@ -497,11 +499,17 @@ until #cand==0
 end
 
 function updatestats()
-	local atk=1
-	if itm[1] then
-		atk+=itemstat[eqp[1]]
+	local atk,dmin,dmax=1,0,0
+	if eqp[1] then
+		atk+=itm_stat1[eqp[1]]
 	end
+    if eqp[2] then
+     dmin+=itm_stat1[eqp[2]]
+     dmax+=itm_stat2[eqp[2]]
+    end
 	p_mob.atk=atk
+	p_mob.defmin=dmin
+	p_mob.defmax=dmax
 end
 -->8
 --ui tab 5
@@ -628,7 +636,7 @@ function showinv()
  invwind.cur=3
  invwind.col=col
 
- statwind=addwind(5,5,84,13,{"atk:"..p_mob.atk.." 1 def: 1"})
+ statwind=addwind(5,5,84,13,{"atk:"..p_mob.atk.." def: "..p_mob.defmin.."-"..p_mob.defmax})
 	curwind=invwind
 
 end
@@ -702,6 +710,8 @@ function addmob(typ,mx,my)
   hp=mob_hp[typ],
   hpmax=mob_hp[typ],
   atk=mob_atk[typ],
+  defmin=0,
+  defmax=0,
   los=mob_los[typ],
   task=ai_wait
  }
