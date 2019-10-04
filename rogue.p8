@@ -6,7 +6,7 @@ function _init()
  dpal={0,1,1,2,1,13,6,4,4,9,3,13,1,13,14}
  dirx={-1,1,0,0,1,1,-1,-1}
  diry={0,0,-1,1,-1,1,1,-1}
- thrdir,thrdx,thrdy=2,0,-1
+ thrdx,thrdy=0,-1
  mob_ani={240,192}
  mob_atk={1,1}
  mob_hp={5,2}
@@ -58,11 +58,11 @@ function startgame()
  --eqp[1] - weapon
  --eqp[2] - armor
  --inv[1-6] - inventory
- takeitem(1)
- takeitem(2)
- takeitem(3)
- takeitem(4)
- takeitem(5)
+ --takeitem(1)
+ --takeitem(2)
+ --takeitem(3)
+ --takeitem(4)
+ --takeitem(5)
  wind={}
  float={}
  fog=blankmap(0)
@@ -114,10 +114,9 @@ end
 function update_throw()
  local b=getbutt()
   if b>=0 and b<=3 then
-   thrdir=b
+   thrdx=dirx[b+1]
+   thrdy=diry[b+1]
   end
- thrdx=dirx[thrdir+1]
- thrdy=diry[thrdir+1]
  if b==4 then
   _upd=update_game
  elseif b==5 then
@@ -131,16 +130,16 @@ function move_mnu(wnd)
  elseif btnp(3) then
   wnd.cur+=1
  end
-	wnd.cur=(wnd.cur-1)%#wnd.txt+1
+ wnd.cur=(wnd.cur-1)%#wnd.txt+1
 end
 
 function update_pturn()
 
  dobuttbuff() 
  p_t=min(p_t+.125,1)
-	if p_mob.mov then
-		p_mob:mov()
-	end
+ if p_mob.mov then
+  p_mob:mov()
+ end
 
  if p_t==1 then
   _upd=update_game
@@ -222,9 +221,8 @@ function draw_game()
   local tx,ty=throwtile()
   local lx1,ly1=p_mob.x*8+3+thrdx*4,p_mob.y*8+3+thrdy*4
   local lx2,ly2=mid(0,tx*8+3,127),mid(0,ty*8+3,127)
-		rectfill(lx1+thrdy,ly1+thrdx,lx2-thrdy,ly2-thrdx,0)
-
-		local thrani,mb=flr(t/7)%2==0,getmob(tx,ty)
+  rectfill(lx1+thrdy,ly1+thrdx,lx2-thrdy,ly2-thrdx,0)
+  local thrani,mb=flr(t/7)%2==0,getmob(tx,ty)
   if thrani then
    fillp(0b1010010110100101)
   else
@@ -233,9 +231,9 @@ function draw_game()
   line(lx1,ly1,lx2,ly2,7)
   fillp()
   oprint8("x",lx2-1,ly2-2,7)
-		if mb and thrani then 
-			mb.flash=1
-		end
+  if mb and thrani then 
+   mb.flash=1
+  end
  end
 
  for x=0,15 do
@@ -377,37 +375,45 @@ function moveplayer(dx,dy)
  unfog()
 end
 function trig_bump(tle,destx,desty)
-  if tle==7 or tle==8 then
-   --vase
-   sfx(59)
-   mset(destx,desty,1)
-  elseif tle==10 or tle==12 then
-   --chest
-   sfx(61)
-   mset(destx,desty,tle-1)
-  elseif tle==13 then
-   --door
-   sfx(62)
-   mset(destx,desty,1)
-  elseif tle==6 then
-   --stone tablet
-   if destx==5 and desty ==2 then
-    showtalk({'  '..'welcome to gip','','explore','take well care','for the path',' is dangerous'})
-   elseif destx==6 and desty ==10 then
-    showtalk({'  '..'oh man its scary','what was that?'})
-   elseif destx==14 and desty ==5 then
-    showtalk({'  '..'pretty cool bro','','find stuff','like swords','or garbage','or maybe gold'})
-   end
+ if tle==7 or tle==8 then
+  --vase
+  sfx(59)
+  mset(destx,desty,1)
+  if rnd(4)<1 then
+   local itm=flr(rnd(#itm_name))+1
+   takeitem(itm)
+   showmsg(itm_name[itm],60)
   end
+ elseif tle==10 or tle==12 then
+  --chest
+  sfx(61)
+  mset(destx,desty,tle-1)
+  local itm=flr(rnd(#itm_name))+1
+  takeitem(itm)
+  showmsg(itm_name[itm],60)
+ elseif tle==13 then
+  --door
+  sfx(62)
+  mset(destx,desty,1)
+ elseif tle==6 then
+  --stone tablet
+  if destx==5 and desty ==2 then
+   showtalk({'  '..'welcome to gip','','explore','take well care','for the path',' is dangerous'})
+  elseif destx==6 and desty ==10 then
+   showtalk({'  '..'oh man its scary','what was that?'})
+  elseif destx==14 and desty ==5 then
+   showtalk({'  '..'pretty cool bro','','find stuff','like swords','or garbage','or maybe gold'})
+  end
+ end
 end
 
 function getmob(x,y)
-  for m in all(mob) do
-   if m.x==x and m.y==y then
-    return m
-   end
+ for m in all(mob) do
+  if m.x==x and m.y==y then
+   return m
   end
-  return false
+ end
+ return false
 end
 
 function iswalkable(x,y,mode)
@@ -568,23 +574,23 @@ function eat(itm,mb)
 end
 
 function throw()
-	local tx,ty=throwtile()
+ local tx,ty=throwtile()
  local itm=inv[thrslt]
-	if inbounds(tx,ty) then
-		local mb=getmob(tx,ty)
-		if mb then
-			if itm_type[itm]=="fud" then
-				eat(itm,mb)
-			else
-				hitmob(nil,mb,itm_stat1[itm])
-				sfx(58)
-			end
-		end
-	end
-	mobbump(p_mob,thrdx,thrdy)
-	inv[thrslt]=nil
-	p_t=0
-	_upd=update_pturn
+ if inbounds(tx,ty) then
+  local mb=getmob(tx,ty)
+  if mb then
+   if itm_type[itm]=="fud" then
+    eat(itm,mb)
+   else
+    hitmob(nil,mb,itm_stat1[itm])
+    sfx(58)
+   end
+  end
+ end
+ mobbump(p_mob,thrdx,thrdy)
+ inv[thrslt]=nil
+ p_t=0
+ _upd=update_pturn
 end
 
 function throwtile()
@@ -602,11 +608,11 @@ end
 
 function addwind(_x,_y,_w,_h,_txt)
  local w={x=_x,
-          y=_y,
-          w=_w,
-          h=_h,
-          txt=_txt
-         }
+  y=_y,
+  w=_w,
+  h=_h,
+  txt=_txt
+ }
  add(wind,w)
  return w
 end
@@ -634,10 +640,7 @@ function drawind()
    end
    wy+=6
   end
-
   clip()
-
-
   if w.dur then
    w.dur-=1
    if w.dur<=0 then
@@ -701,7 +704,7 @@ function showinv()
    eqt=itm_name[itm]
    add(col,6)
   else
-			eqt=i==1 and "[weapon]" or "[armor]"
+   eqt=i==1 and "[weapon]" or "[armor]"
    add(col,5)
   end
   add(txt,eqt)
@@ -721,10 +724,8 @@ function showinv()
  invwind=addwind(5,17,84,62,txt)
  invwind.cur=3
  invwind.col=col
-
  statwind=addwind(5,5,84,13,{"atk:"..p_mob.atk.." def: "..p_mob.defmin.."-"..p_mob.defmax})
-	curwind=invwind
-
+ curwind=invwind
 end
 
 function showuse()
@@ -747,43 +748,39 @@ function showuse()
 end
 
 function triguse()
-	local verb,i,back=usewind.txt[usewind.cur],invwind.cur,true
+ local verb,i,back=usewind.txt[usewind.cur],invwind.cur,true
  local itm=i<3 and eqp[i] or inv[i-3]
-	if verb=="trash" then
-		if i<3 then
-			eqp[i]=nil
-		else
-			inv[i-3]=nil
-		end
-	elseif verb=="equip" then
-		local slot=2
-		if itm_type[itm]=="wep" then
-			slot=1
-		end
-		inv[i-3]=eqp[slot]
-		eqp[slot]=itm
-	elseif verb=="eat" then
-		eat(itm,p_mob)
-		_upd,inv[i-3],p_mob.mov,p_t=update_pturnnil
-		l=nil
-		back=false
-		=0
-		=
-	elseif verb=="throw" then
-		_upd,thrslt,back=update_throw,i-3,false
-	end
-	updatestats()
-		--?
-		usewind.dur=0
-		if back then
-			del(wind,invwind)
-			del(wind,statwind)
-			showinv()
-			invwind.cur=i
-		else
-			invwind.dur=0
-			statwind.dur=0
-		end
+ if verb=="trash" then
+  if i<3 then
+   eqp[i]=nil
+  else
+   inv[i-3]=nil
+  end
+ elseif verb=="equip" then
+  local slot=2
+  if itm_type[itm]=="wep" then
+   slot=1
+  end
+  inv[i-3]=eqp[slot]
+  eqp[slot]=itm
+ elseif verb=="eat" then
+  eat(itm,p_mob)
+  _upd,inv[i-3],p_mob.mov,p_t,back=update_pturn,nil,nil,0,false
+ elseif verb=="throw" then
+  _upd,thrslt,back=update_throw,i-3,false
+ end
+ updatestats()
+ --?
+ usewind.dur=0
+ if back then
+  del(wind,invwind)
+  del(wind,statwind)
+  showinv()
+  invwind.cur=i
+ else
+  invwind.dur=0
+  statwind.dur=0
+ end
 end
 
 -->8
@@ -823,10 +820,10 @@ function mobwalk(mb,dx,dy)
 end
 
 function mobbump(mb,dx,dy)
-   mobflip(mb,dx)
-   mb.sox, mb.soy=dx*8,dy*8
-   mb.ox, mb.oy=0,0
-   mb.mov=mov_bump
+ mobflip(mb,dx)
+ mb.sox, mb.soy=dx*8,dy*8
+ mb.ox, mb.oy=0,0
+ mb.mov=mov_bump
 end
 
 function mobflip(mb,dx)
