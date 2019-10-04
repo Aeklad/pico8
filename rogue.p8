@@ -13,7 +13,7 @@ function _init()
  mob_los={4,4}
  itm_name={"broad sword","leather armor","red bean paste","ninja star","rusty sword"}
  itm_type={"wep","arm","fud","thr","wep"}
- itm_stat1={2,0,1,0,1}
+ itm_stat1={2,0,1,1,1}
  itm_stat2={0,2,0,0,0}
  debug={}
  startgame()
@@ -220,13 +220,12 @@ function draw_game()
 
  if _upd==update_throw then
   local tx,ty=throwtile()
-  local lx1=p_mob.x*8+3+thrdx*4
-  local ly1=p_mob.y*8+3+thrdy*4
-  local lx2=mid(0,tx*8+3,127)
-  local ly2=mid(0,ty*8+3,127)
-  line(lx1+thrdy,ly1+thrdx,lx2+thrdy,ly2+thrdx,0)
-  line(lx1-thrdy,ly1-thrdx,lx2-thrdy,ly2-thrdx,0)
-  if flr(t/7)%2==0 then
+  local lx1,ly1=p_mob.x*8+3+thrdx*4,p_mob.y*8+3+thrdy*4
+  local lx2,ly2=mid(0,tx*8+3,127),mid(0,ty*8+3,127)
+		rectfill(lx1+thrdy,ly1+thrdx,lx2-thrdy,ly2-thrdx,0)
+
+		local thrani,mb=flr(t/7)%2==0,getmob(tx,ty)
+  if thrani then
    fillp(0b1010010110100101)
   else
    fillp(0b0101101001011010)
@@ -234,6 +233,9 @@ function draw_game()
   line(lx1,ly1,lx2,ly2,7)
   fillp()
   oprint8("x",lx2-1,ly2-2,7)
+		if mb and thrani then 
+			mb.flash=1
+		end
  end
 
  for x=0,15 do
@@ -432,8 +434,8 @@ function inbounds(x,y)
  return not(x<0 or y<0 or x>15 or y>15)
 end
 
-function hitmob(atkm,defm)
- local dmg=atkm.atk
+function hitmob(atkm,defm,rawdmg)
+ local dmg=atkm and atkm.atk or rawdmg
  local def=defm.defmin+flr(rnd(defm.defmax-defm.defmin+1))
  dmg-=min(def,dmg)
  defm.hp-=dmg
@@ -566,7 +568,23 @@ function eat(itm,mb)
 end
 
 function throw()
-	_upd=update_game
+	local tx,ty=throwtile()
+ local itm=inv[thrslt]
+	if inbounds(tx,ty) then
+		local mb=getmob(tx,ty)
+		if mb then
+			if itm_type[itm]=="fud" then
+				eat(itm,mb)
+			else
+				hitmob(nil,mb,itm_stat1[itm])
+				sfx(58)
+			end
+		end
+	end
+	mobbump(p_mob,thrdx,thrdy)
+	inv[thrslt]=nil
+	p_t=0
+	_upd=update_pturn
 end
 
 function throwtile()
@@ -729,7 +747,7 @@ function showuse()
 end
 
 function triguse()
-	local verb,i,after=usewind.txt[usewind.cur],invwind.cur,"back"
+	local verb,i,back=usewind.txt[usewind.cur],invwind.cur,true
  local itm=i<3 and eqp[i] or inv[i-3]
 	if verb=="trash" then
 		if i<3 then
@@ -746,36 +764,25 @@ function triguse()
 		eqp[slot]=itm
 	elseif verb=="eat" then
 		eat(itm,p_mob)
-		inv[i-3]=nil
-		p_mob.mov=nil
-		after="turn"
+		_upd,inv[i-3],p_mob.mov,p_t=update_pturnnil
+		l=nil
+		back=false
+		=0
+		=
 	elseif verb=="throw" then
-		after="throw"
+		_upd,thrslt,back=update_throw,i-3,false
 	end
 	updatestats()
 		--?
-		if after=="back"then
-			usewind.dur=0
+		usewind.dur=0
+		if back then
 			del(wind,invwind)
 			del(wind,statwind)
 			showinv()
 			invwind.cur=i
-		elseif after=="turn" then
-			usewind.dur=0
+		else
 			invwind.dur=0
 			statwind.dur=0
-			p_t=0
-			_upd=update_pturn
-		elseif after=="game" then
-			usewind.dur=0
-			invwind.dur=0
-			statwind.dur=0
-			_upd=update_game
-		elseif after=="throw" then
-			usewind.dur=0
-			invwind.dur=0
-			statwind.dur=0
-			_upd=update_throw
 		end
 end
 
