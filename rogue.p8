@@ -9,7 +9,7 @@ function _init()
  thrdx,thrdy=0,-1
  mob_ani={240,192}
  mob_atk={1,1}
- mob_hp={5,2}
+ mob_hp={5,1}
  mob_los={4,4}
  itm_name={"broad sword","leather armor","red bean paste","ninja star","rusty sword"}
  itm_type={"wep","arm","fud","thr","wep"}
@@ -40,18 +40,10 @@ end
 function startgame()
  fadeperc=1
  buttbuff=-1
-
+	skipai=false
  mob={}
  dmob={}
  p_mob=addmob(1,1,1)
- for x=0,15 do
-  for y=0,15 do
-   if mget(x,y)==192 then
-    addmob(2,x,y)
-    mset(x,y,1)
-   end
-  end
- end
 
  p_t=0
  inv,eqp={},{}
@@ -71,6 +63,7 @@ function startgame()
  _upd=update_game
  _drw=draw_game
  unfog()
+	mapgen()
 end
 -->8
 --updates tab 1
@@ -144,7 +137,11 @@ function update_pturn()
  if p_t==1 then
   _upd=update_game
   if checkend() then
-   doai()
+			if skipai then
+				skipai=false 
+			else
+				doai()
+			end
   end
  calcdist(p_mob.x,p_mob.y)
  end
@@ -368,7 +365,9 @@ function moveplayer(dx,dy)
    hitmob(p_mob,mob)
   else
    if fget(tle,1) then
-    trig_bump(tle,destx,desty)
+				trig_bump(tle,destx,desty) 
+			else
+				skipai=true
    end
   end
  end
@@ -946,6 +945,54 @@ function freeinvslot()
 end
 
 
+-->8
+--gen
+--tab 7 level gen
+
+function mapgen()
+
+ for x=0,15 do
+  for y=0,15 do
+			mset(x,y,2)
+   end
+  end
+	genrooms()
+
+end
+
+-------------------
+--rooms
+-------------------
+
+function genrooms()
+	local r=rndroom(5,5)
+	placeroom(r)
+end
+
+function rndroom(mw,mh)
+	local _w=3+flr(rnd(mw-2))
+	local _h=3+flr(rnd(mh-2))
+	return {
+		x=0,
+		y=0,
+		w=_w,
+		h=_h
+	}
+
+end
+
+function placeroom(r)
+	local cand={}
+ for _x=0,15-r.w do
+  for _y=0,15-r.h do
+			if doesroomfit(r,_x,_y) then
+				add(cand,x=_x,y=_y)
+			end
+		end
+	end
+	if #cand==0 then return false end
+	c=getrnd(cand)
+end
 __gfx__
 00000000000000005555555000000000000000000000000044444000000000004400044000000000000000001111111000444000444444404444000011111110
 00000000000000005555555000000000000000000000000004444400000000000444440011111100000000001000001044444440404040400000000011111110
