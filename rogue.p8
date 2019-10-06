@@ -6,7 +6,6 @@ function _init()
  dpal={0,1,1,2,1,13,6,4,4,9,3,13,1,13,14}
  dirx={-1,1,0,0,1,1,-1,-1}
  diry={0,0,-1,1,-1,1,1,-1}
- thrdx,thrdy=0,-1
  mob_ani={240,192}
  mob_atk={1,1}
  mob_hp={5,1}
@@ -15,6 +14,8 @@ function _init()
  itm_type={"wep","arm","fud","thr","wep"}
  itm_stat1={2,0,1,1,1}
  itm_stat2={0,2,0,0,0}
+ crv_sig={0b11111111,0b11010110,0b01111100,0b10110011,0b11101001}
+ crv_msk={0,0b00001001,0b00000011,0b00001100,0b00000110}
  debug={}
  startgame()
 end
@@ -60,6 +61,7 @@ function startgame()
  fog=blankmap(0)
  talkwind = nil
  hpwind=addwind(5,5,28,13,{})
+ thrdx,thrdy=0,-1
  _upd=update_game
  _drw=draw_game
  unfog()
@@ -191,6 +193,8 @@ function dobutt(butt)
   moveplayer(dirx[butt+1],diry[butt+1])
  elseif butt==5 then
   showinv()
+ elseif butt==4 then
+  mapgen()
  end
 end
  
@@ -365,9 +369,11 @@ function moveplayer(dx,dy)
    hitmob(p_mob,mob)
   else
    if fget(tle,1) then
-				trig_bump(tle,destx,desty) 
-			else
-				skipai=true
+    trig_bump(tle,destx,desty) 
+   else
+    skipai=true
+    mset(destx,desty,1)
+    mazeworm()
    end
   end
  end
@@ -526,19 +532,19 @@ function unfogtile(x,y)
 end
 
 function calcdist(tx,ty)
- local cand,step={},0
+ local cand,stp={},0
  distmap=blankmap(-1)
  add(cand,{x=tx,y=ty})
  distmap[tx][ty]=0
  repeat
- step+=1
+ stp+=1
  candnew={}
  for c in all(cand) do
   for d=1,4 do
    local dx=c.x+dirx[d]
    local dy=c.y+diry[d]
    if inbounds(dx,dy) and distmap[dx][dy]==-1 then
-    distmap[dx][dy]=step
+    distmap[dx][dy]=stp
     if iswalkable(dx,dy) then
      add(candnew,{x=dx,y=dy})
     end
@@ -953,11 +959,16 @@ function mapgen()
 
  for x=0,15 do
   for y=0,15 do
-			mset(x,y,2)
-   end
+   mset(x,y,2)
   end
-	genrooms()
-
+ end
+ genrooms()
+ mazeworm()
+ placeflags()
+ carvedoors()
+ carvescuts()
+ fillends()
+ debug[1]=stat(0)
 end
 
 -------------------
@@ -965,49 +976,274 @@ end
 -------------------
 
 function genrooms()
-	local r=rndroom(5,5)
-	placeroom(r)
+ local fmax,rmax=5,4
+ local mw,mh=6,6
+ repeat
+  local r=rndroom(mw,mh)
+  if placeroom(r) then
+   rmax-=1
+  else
+   fmax-=1
+   if r.w>r.h then
+    mw=max(mw-1,3)
+   else
+    mh=max(mh-1,3)
+   end
+  end
+ until fmax<=0 or rmax<=0
 end
 
 function rndroom(mw,mh)
-	local _w=3+flr(rnd(mw-2))
-	local _h=3+flr(rnd(mh-2))
-	return {
-		x=0,
-		y=0,
-		w=_w,
-		h=_h
-	}
+ --clamp max area
+ local _w=3+flr(rnd(mw-2))
+ mh=max(35/_w,3)
+ local _h=3+flr(rnd(mh-2))
+ return {
+  x=0,
+  y=0,
+  w=_w,
+  h=_h
+ }
 
 end
 
 function placeroom(r)
-	local cand={}
- for _x=0,15-r.w do
-  for _y=0,15-r.h do
-			if doesroomfit(r,_x,_y) then
-				add(cand,x=_x,y=_y)
-			end
-		end
-	end
-	if #cand==0 then return false end
-	c=getrnd(cand)
+ local cand,c={}
+ for _x=0,16-r.w do
+  for _y=0,16-r.h do
+   if doesroomfit(r,_x,_y) then
+    add(cand,{x=_x,y=_y})
+   end
+  end
+ end
+ if #cand==0 then return false end
+ c=getrnd(cand)
+ r.x=c.x
+ r.y=c.y
+ for _x=0,r.w-1 do
+  for _y=0,r.h-1 do
+   mset(_x+r.x,_y+r.y,1)
+   end
+  end
+  return true
 end
+
+function doesroomfit(r,x,y)
+ for _x=-1,r.w+1 do
+  for _y=-1,r.h+1 do
+   if iswalkable(_x+x,_y+y) then
+    return false
+   end
+  end
+ end
+ return true
+end
+------------------
+--maze
+------------------
+
+function mazeworm()
+ repeat
+  local cand={}
+  for _x=0,15 do
+   for _y=0,15 do
+    if not iswalkable(_x,_y) and getsig(_x,_y)==255 then
+     add(cand,{x=_x,y=_y})
+    end
+   end
+  end
+  if#cand>0 then
+   local c=getrnd(cand)
+   digworm(c.x,c.y)
+  end
+ until #cand<=1
+end
+
+function digworm(x,y)
+ local dr,stp=1+flr(rnd(4)),0
+ repeat 
+  mset(x,y,1)
+  if not cancarve(x+dirx[dr],y+diry[dr],false) or (rnd()<0.5 and stp>2)then
+   stp=0
+   local cand={}
+   for i=1,4 do
+    if cancarve(x+dirx[i],y+diry[i],false) then
+     add(cand,i)
+    end
+   end
+   if #cand==0 then
+    dr=8
+   else
+    dr=getrnd(cand)
+   end
+  end
+  x+=dirx[dr]
+  y+=diry[dr]
+  stp+=1
+ until dr==8 
+end
+
+function cancarve(x,y,walk)
+ if inbounds(x,y) and iswalkable(x,y)==walk then 
+  local sig=getsig(x,y)
+  for i=1,#crv_sig do
+   if bcomp(sig,crv_sig[i],crv_msk[i]) then
+    return true
+   end
+  end
+ end
+ return false
+end
+function bcomp(sig,match,mask)
+ local mask=mask and mask or 0
+ return bor(sig,mask)==bor(match,mask)
+end
+
+function getsig(x,y)
+ local sig,digit=0
+ for i=1,8 do
+  local dx,dy=x+dirx[i],y+diry[i]
+  if iswalkable(dx,dy) then
+   digit=0
+  else
+   digit=1
+  end
+  sig=bor(sig,shl(digit,8-i))
+ end
+ return sig
+end
+
+----------------------
+-- doorways
+----------------------
+
+function placeflags()
+ local curf=1
+ flags=blankmap(0)
+ for _x=0,15 do
+  for _y=0,15 do
+   if iswalkable(_x,_y) and flags[_x][_y]==0 then
+    growflag(_x,_y,curf)
+    curf+=1
+   end
+  end
+ end
+end
+
+function growflag(_x,_y,flg)
+ local cand,candnew={{x=_x,y=_y}}
+ repeat 
+  candnew={}
+  for c in all(cand) do
+   for d=1,4 do
+    local dx,dy=c.x+dirx[d],c.y+diry[d]
+    flags[_x][_y]=flg
+    if iswalkable(dx,dy) and flags[dx][dy]!=flg then
+     flags[dx][dy]=flg
+     add(candnew,{x=dx,y=dy})
+    end
+   end
+  end
+  cand=candnew
+ until #cand==0
+end
+
+function carvedoors()
+ local x1,y1,x2,y2,found,_f1,_f2=1,1,1,1
+ repeat
+  local drs={}
+  for _x=0,15 do
+   for _y=0,15 do
+    if not iswalkable(_x,_y) then
+     local sig=getsig(_x,_y)
+     found=false
+     if bcomp(sig,0b11000000,0b00001111) then
+      x1,y1,x2,y2,found=_x,_y-1,_x,_y+1,true
+     elseif bcomp(sig,0b00110000,0b00001111)then
+      x1,y1,x2,y2,found=_x-1,_y,_x+1,_y,true
+     end
+     _f1=flags[x1][y1]
+     _f2=flags[x2][y2]
+     if found and _f1!=_f2 then
+      add(drs,{x=_x,y=_y,f1=_f1,f2=_f2})
+     end
+    end
+   end
+  end
+ if #drs>0 then
+  local d=getrnd(drs)
+  mset(d.x,d.y,1)
+  growflag(d.x,d.y,d.f1)
+ end
+ until #drs==0
+end
+
+
+function carvescuts()
+ local x1,y1,x2,y2,cut,found=1,1,1,1,0
+ repeat
+  local drs={}
+  for _x=0,15 do
+   for _y=0,15 do
+    if not iswalkable(_x,_y) then
+     local sig=getsig(_x,_y)
+     found=false
+     if bcomp(sig,0b11000000,0b00001111) then
+      x1,y1,x2,y2,found=_x,_y-1,_x,_y+1,true
+     elseif bcomp(sig,0b00110000,0b00001111)then
+      x1,y1,x2,y2,found=_x-1,_y,_x+1,_y,true
+     end
+     if found then
+      calcdist(x1,y1)
+      if distmap[x2][y2]>20 then
+      add(drs,{x=_x,y=_y,})
+     end
+    end
+   end
+  end
+ end
+ if #drs>0 then
+  local d=getrnd(drs)
+  mset(d.x,d.y,1)
+  cut+=1
+ end
+ until #drs==0 or cut>=3
+end
+
+
+function fillends()
+ local cand
+ repeat
+  cand={}
+  for _x=0,15 do
+   for _y=0,15 do
+    if cancarve(_x,_y,true) then
+     add(cand,{x=_x,y=_y})
+    end
+   end
+  end
+  for c in all(cand) do
+   mset(c.x,c.y,2)
+  end
+  
+ until #cand==0
+end
+
 __gfx__
-00000000000000005555555000000000000000000000000044444000000000004400044000000000000000001111111000444000444444404444000011111110
-00000000000000005555555000000000000000000000000004444400000000000444440011111100000000001000001044444440404040400000000011111110
-00700700000000005555555000000000000000000000000004444400004440000444440010000100044440001000001044444440404040404444400000000000
-00077000000000005555555000000000000000000000000004444400000400000444440011001100444444001100011000000000404040404444440011111100
-00077000000000005555555000000000000000000000000004444400004440000044400010000100000000001000001044040440404040400000000011111000
-00700700000100005555555000900000000000000000000004444400004440000004000010000100440044001000001044404440404040404444444000000000
-00000000000000005555555000000000000000000000000000444440000400000044400011111100444444001111111044444440444444404444444011110000
+00000000000000005555555011111110ddd0ddd00000000044444000000000004400044000000000000000001111111000444000444444404444000011111110
+00000000000000005555555011111110ddddddd00000000004444400000000000444440011111100000000001000001044444440404040400000000011111110
+00700700000000005555555011111110ddd0ddd00000000004444400004440000444440010000100044440001000001044444440404040404444400000000000
+00077000000000005555555001010100ddddddd00000000004444400000400000444440011001100444444001100011000000000404040404444440011111100
+00077000000000005555555011111110ddd0ddd00000000004444400004440000044400010000100000000001000001044040440404040400000000011111000
+00700700000100005555555011111110ddddddd00000000004444400004440000004000010000100440044001000001044404440404040404444444000000000
+00000000000000005555555011111110ddd0ddd00000000000444440000400000044400011111100444444001111111044444440444444404444444011110000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+00000000000800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
@@ -1252,7 +1488,7 @@ __label__
 88888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888
 
 __gff__
-0000050000000303030103010307020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0000050505000303030103010307020000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __map__
 0202020202020202020202020202020200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
