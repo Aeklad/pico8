@@ -64,8 +64,8 @@ function startgame()
  thrdx,thrdy=0,-1
  _upd=update_game
  _drw=draw_game
+ genfloor(0)
  unfog()
-	mapgen()
 end
 -->8
 --updates tab 1
@@ -138,14 +138,11 @@ function update_pturn()
 
  if p_t==1 then
   _upd=update_game
-  if checkend() then
-			if skipai then
-				skipai=false 
-			else
-				doai()
-			end
+  if trig_step() then return end
+  if checkend() and not skipai then
+   doai()
   end
- calcdist(p_mob.x,p_mob.y)
+  skipai=false 
  end
 end
 function update_aiturn()
@@ -244,6 +241,12 @@ function draw_game()
    end
   end
  end
+ 
+-- for x=0,15 do
+--  for y=0,15 do
+--    print(roomap[x][y],x*8,y*8,8)
+--  end
+-- end
 
  for f in all(float) do
   oprint8(f.txt,f.x,f.y,f.c,0)
@@ -373,7 +376,6 @@ function moveplayer(dx,dy)
    else
     skipai=true
     mset(destx,desty,1)
-    mazeworm()
    end
   end
  end
@@ -409,6 +411,18 @@ function trig_bump(tle,destx,desty)
   elseif destx==14 and desty ==5 then
    showtalk({'  '..'pretty cool bro','','find stuff','like swords','or garbage','or maybe gold'})
   end
+ end
+end
+
+function trig_step()
+ local tle=mget(p_mob.x,p_mob.y)
+ if tle==14 then 
+  fadeout()
+  genfloor(floor+1)
+ floormsg()
+  return true
+ else
+  return false
  end
 end
 
@@ -532,7 +546,7 @@ function unfogtile(x,y)
 end
 
 function calcdist(tx,ty)
- local cand,stp={},0
+ local cand,stp,candnew={},0
  distmap=blankmap(-1)
  add(cand,{x=tx,y=ty})
  distmap[tx][ty]=0
@@ -788,6 +802,10 @@ function triguse()
  end
 end
 
+function floormsg()
+ showmsg("floor"..floor,120)
+end
+
 -->8
 --mobs and items tab 6
 
@@ -914,13 +932,13 @@ function ai_attac(m)
       bdst=dst
      end
      if dst==bdst then
-      add(cand,{x=dx,y=dy})
+      add(cand,i)
      end
     end
    end
    if #cand>0 then
     local c=getrnd(cand)
-    mobwalk(m,c.x,c.y)
+    mobwalk(m,dirx[c],diry[c])
     return true
    end
   end
@@ -955,6 +973,11 @@ end
 --gen
 --tab 7 level gen
 
+function genfloor(f)
+ floor=f
+ mapgen()
+end
+
 function mapgen()
 
  for x=0,15 do
@@ -962,13 +985,18 @@ function mapgen()
    mset(x,y,2)
   end
  end
+ rooms={}
+ roomap=blankmap(0)
+ doors={}
  genrooms()
  mazeworm()
  placeflags()
  carvedoors()
  carvescuts()
+ startend()
  fillends()
- debug[1]=stat(0)
+ installdoors()
+ --addmob(2,8,8)
 end
 
 -------------------
@@ -996,7 +1024,7 @@ end
 function rndroom(mw,mh)
  --clamp max area
  local _w=3+flr(rnd(mw-2))
- mh=max(35/_w,3)
+ mh=mid(35/_w,3,mh)
  local _h=3+flr(rnd(mh-2))
  return {
   x=0,
@@ -1020,9 +1048,11 @@ function placeroom(r)
  c=getrnd(cand)
  r.x=c.x
  r.y=c.y
+ add(rooms,r)
  for _x=0,r.w-1 do
   for _y=0,r.h-1 do
    mset(_x+r.x,_y+r.y,1)
+   roomap[_x+r.x][_y+r.y]=#rooms
    end
   end
   return true
@@ -1172,6 +1202,7 @@ function carvedoors()
   end
  if #drs>0 then
   local d=getrnd(drs)
+  add(doors,d)
   mset(d.x,d.y,1)
   growflag(d.x,d.y,d.f1)
  end
@@ -1204,6 +1235,7 @@ function carvescuts()
  end
  if #drs>0 then
   local d=getrnd(drs)
+  add(doors,d)
   mset(d.x,d.y,1)
   cut+=1
  end
@@ -1217,7 +1249,8 @@ function fillends()
   cand={}
   for _x=0,15 do
    for _y=0,15 do
-    if cancarve(_x,_y,true) then
+    tle=mget(_x,_y)
+    if cancarve(_x,_y,true) and tle!=14 and tle!=15 then
      add(cand,{x=_x,y=_y})
     end
    end
@@ -1228,6 +1261,70 @@ function fillends()
   
  until #cand==0
 end
+
+function isdoor(x,y)
+ for i=1,4 do
+  if inbounds(x+dirx[i],y+diry[i]) and roomap[x+dirx[i]][y+diry[i]]!=0 then 
+   return true
+  end
+ end
+ return false
+end
+
+function installdoors()
+ for d in all(doors) do
+  if iswalkable(d.x,d.y) and isdoor(d.x,d.y) then
+   mset(d.x,d.y,13)
+  end
+ end
+end
+
+
+-------------------------
+-- decorations
+-------------------------
+function startend()
+ local high,low,px,py,ex,ey=0,9999
+ repeat
+  px,py=flr(rnd(16)),flr(rnd(16))
+ until iswalkable(px,py)
+ calcdist(px,py)
+ for x=0,15 do
+  for y=0,15 do
+   local tmp=distmap[x][y]
+   if iswalkable(x,y)and tmp> high then
+    px,py=x,y
+    high=tmp
+   end
+  end
+ end
+ calcdist(px,py)
+ high=0
+ for x=0,15 do
+  for y=0,15 do
+   local tmp=distmap[x][y]
+   if tmp>high and cancarve(x,y,false) then
+    ex,ey=x,y
+    high=tmp
+   end
+  end
+ end
+ mset(ex,ey,14)
+
+ for x=0,15 do
+  for y=0,15 do
+   local tmp=distmap[x][y]
+   if tmp>=0 and tmp<low and cancarve(x,y,false) then
+    px,py=x,y
+    low=tmp
+   end
+  end
+ end
+ mset(px,py,15)
+ p_mob.x=px
+ p_mob.y=py
+end
+
 
 __gfx__
 00000000000000005555555011111110ddd0ddd00000000044444000000000004400044000000000000000001111111000444000444444404444000011111110
