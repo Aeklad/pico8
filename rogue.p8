@@ -30,6 +30,7 @@ end
 function _draw()
  _drw()
  drawind()
+ --fadeperc=0
  checkfade()
  cursor(4,4)
  color(8)
@@ -202,6 +203,7 @@ end
 
 function draw_game()
  cls(0)
+ if fadeperc==1 then return end
  map()
  for m in all(dmob) do
   if sin(time()*8)>0 then
@@ -506,14 +508,12 @@ function checkend()
   _upd=update_gover
   _drw=draw_win
   fadeout(0.02)
-  reload(0x2000,0x2000,0x1000)
   return false
  elseif p_mob.hp<=0 then
   wind={}
   _upd=update_gover
   _drw=draw_gover
   fadeout(0.02)
-  reload(0x2000,0x2000,0x1000)
   return false
  end
  return true
@@ -990,7 +990,7 @@ end
 
 function infestroom(r)
  local target=2+flr(rnd(3))
- local x,y=0
+ local x,y
  for i=1,target do
   repeat
    x=r.x+flr(rnd(r.w))
@@ -1027,6 +1027,8 @@ end
 
 function genfloor(f)
  floor=f
+ mob={}
+ add(mob,p_mob)
  if floor==0 then
   copymap(16,0)
  elseif floor==winfloor then
@@ -1038,8 +1040,6 @@ end
 
 function mapgen()
  copymap(48,0)
- mob={}
- add(mob,p_mob)
  rooms={}
  roomap=blankmap(0)
  doors={}
@@ -1054,6 +1054,11 @@ function mapgen()
  spawnmobs()
 end
 
+function snapshot()
+ cls()
+ map()
+ flip()
+end
 -------------------
 --rooms
 -------------------
@@ -1065,6 +1070,7 @@ function genrooms()
   local r=rndroom(mw,mh)
   if placeroom(r) then
    rmax-=1
+   snapshot()
   else
    fmax-=1
    if r.w>r.h then
@@ -1132,28 +1138,14 @@ function mazeworm()
   local cand={}
   for _x=0,15 do
    for _y=0,15 do
-    if not iswalkable(_x,_y) and getsig(_x,_y)==255 then
-     add(cand,{x=_x,y=_y})
-    end
+     if cancarve(_x,_y,false) and not nexttoroom(_x,_y) then
+      add(cand,{x=_x,y=_y})
+     end
    end
   end
   if#cand>0 then
    local c=getrnd(cand)
    digworm(c.x,c.y)
-  end
- until #cand<=1
- repeat 
-  local cand={}
-  for _x=0,15 do
-   for _y=0,15 do
-    if cancarve(_x,_y,false) and not nexttoroom(_x,_y)then
-     add(cand,{x=_x,y=_y})
-    end
-   end
-  end
-  if#cand>0 then
-   local c=getrnd(cand)
-   mset(c.x,c.y,1)
   end
  until #cand<=1
 end
@@ -1162,6 +1154,7 @@ function digworm(x,y)
  local dr,stp=1+flr(rnd(4)),0
  repeat 
   mset(x,y,1)
+  snapshot()
   if not cancarve(x+dirx[dr],y+diry[dr],false) or (rnd()<0.5 and stp>2)then
    stp=0
    local cand={}
@@ -1183,7 +1176,9 @@ function digworm(x,y)
 end
 
 function cancarve(x,y,walk)
- if inbounds(x,y) and iswalkable(x,y)==walk then 
+ if not inbounds(x,y) then return false end
+ local walk=walk==nil and iswalkable(x,y) or walk
+ if iswalkable(x,y)==walk then 
   local sig=getsig(x,y)
   for i=1,#crv_sig do
    if bcomp(sig,crv_sig[i],crv_msk[i]) then
@@ -1264,7 +1259,7 @@ function carvedoors()
      _f1=flags[x1][y1]
      _f2=flags[x2][y2]
      if found and _f1!=_f2 then
-      add(drs,{x=_x,y=_y,f1=_f1,f2=_f2})
+      add(drs,{x=_x,y=_y,f=_f1})
      end
     end
    end
@@ -1273,7 +1268,8 @@ function carvedoors()
   local d=getrnd(drs)
   add(doors,d)
   mset(d.x,d.y,1)
-  growflag(d.x,d.y,d.f1)
+  snapshot()
+  growflag(d.x,d.y,d.f)
  end
  until #drs==0
 end
@@ -1306,6 +1302,7 @@ function carvescuts()
   local d=getrnd(drs)
   add(doors,d)
   mset(d.x,d.y,1)
+  snapshot()
   cut+=1
  end
  until #drs==0 or cut>=3
@@ -1313,22 +1310,20 @@ end
 
 
 function fillends()
- local cand
+ local filled,tle
  repeat
-  cand={}
+  filled=false
   for _x=0,15 do
    for _y=0,15 do
     tle=mget(_x,_y)
     if cancarve(_x,_y,true) and tle!=14 and tle!=15 then
-     add(cand,{x=_x,y=_y})
+     filled=true
+     mset(_x,_y,2)
+     snapshot()
     end
    end
   end
-  for c in all(cand) do
-   mset(c.x,c.y,2)
-  end
-  
- until #cand==0
+ until not filled
 end
 
 function isdoor(x,y)
@@ -1351,6 +1346,7 @@ function installdoors()
  for d in all(doors) do
   if mget(d.x,d.y)==1 and isdoor(d.x,d.y) then
    mset(d.x,d.y,13)
+   snapshot()
   end
  end
 end
@@ -1379,7 +1375,7 @@ function startend()
  for x=0,15 do
   for y=0,15 do
    local tmp=distmap[x][y]
-   if tmp>high and (cancarve(x,y,false) or cancarve(x,y,true))then
+   if tmp>high and cancarve(x,y) then
     ex,ey=x,y
     high=tmp
    end
@@ -1390,7 +1386,7 @@ function startend()
  for x=0,15 do
   for y=0,15 do
    local tmp=distmap[x][y]
-   if tmp>=0 and tmp<low and (cancarve(x,y,false) or cancarve(x,y,true)) then
+   if tmp>=0 and tmp<low and cancarve(x,y) then
     px,py=x,y
     low=tmp
    end
