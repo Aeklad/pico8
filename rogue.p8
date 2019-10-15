@@ -1,5 +1,3 @@
-<<<<<<< HEAD
-=======
 pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
@@ -19,6 +17,9 @@ function _init()
  mob_hp=explodeval("5,1,2,3,3,4,5,14,8")
  mob_los=explodeval("4,4,4,4,4,4,4,4,4")
  mob_atk=explodeval("1,1,2,1,2,3,3,5,5")
+ mob_minf=explodeval("1,1,2,3,4,5,6,7,8")
+ mob_maxf=explodeval("1,3,4,5,6,7,8,8,8")
+ mob_spec=explode(",divdes,steals food,,,stun,,slow,sleep")
  crv_sig={0b11111111,0b11010110,0b01111100,0b10110011,0b11101001}
  crv_msk={0,0b00001001,0b00000011,0b00001100,0b00000110}
  
@@ -204,7 +205,6 @@ function dobutt(butt)
   showinv()
  elseif butt==4 then
   genfloor(floor+1)
-  unfog()
  end
 end
  
@@ -1032,7 +1032,7 @@ function spawnmobs()
  mobpool={}
  for i=2,#mob_name do
   if mob_minf[i]<=floor and mob_maxf[i]>=floor then
-   add(mob_pool[i])
+   add(mobpool[i])
   end
  end
  if #mobpool==0 then return end
@@ -1096,7 +1096,7 @@ function genfloor(f)
  elseif floor==winfloor then
   copymap(32,0)
  else
-  fog=blankmap(1)
+  fog=blankmap(0)
   mapgen()
   unfog()
  end
@@ -1888,4 +1888,3 @@ __sfx__
 000400000054000560005000150003550095500d55000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 00070000012000121005210082200c220045100440001200003000030001700017000070000700007000070000000000000000000000000000000000000000000000000000000000000000000000000000000000
 000100001d600095400e54010530105300a5400255000500005000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
->>>>>>> c819e971094d966ea8abfe4a6862a9be51275dca
