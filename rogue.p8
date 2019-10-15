@@ -1,6 +1,7 @@
 pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
+--help!!
 function _init()
  t=0
  dpal=explodeval("0,1,1,2,1,13,6,4,4,9,3,13,1,13,14")
@@ -286,7 +287,7 @@ end
 
 function animap()
  tani+=1
- if (tani<15) return --weird syntax i don't get it<F2>
+ if (tani<15) return --weird syntax i don't get it<f2>
  tani=0
  for x=0,15 do
   for y=0,15 do
