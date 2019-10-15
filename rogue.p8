@@ -6,14 +6,18 @@ function _init()
  dpal=explodeval("0,1,1,2,1,13,6,4,4,9,3,13,1,13,14")
  dirx=explodeval("-1,1,0,0,1,1,-1,-1")
  diry=explodeval("0,0,-1,1,-1,1,1,-1")
- mob_ani=explodeval("240,192")
- mob_atk=explodeval("1,1")
- mob_hp=explodeval("5,1")
- mob_los=explodeval("4,4")
+
  itm_name=explode("broad sword,leather armor,red bean paste,ninja star,rusty sword")
- itm_type=explode("wep,arm,fud,thr,wep")
+ itm_type=explode("wep,arm,fud,thr,wep,")
  itm_stat1=explodeval("2,0,1,1,1")
  itm_stat2=explodeval("0,2,0,0,0")
+
+ mob_name=explode("player,slime")
+ mob_ani=explodeval("240,192")
+ mob_hp=explodeval("5,1")
+ mob_los=explodeval("4,4")
+ mob_atk=explodeval("1,1")
+
  crv_sig={0b11111111,0b11010110,0b01111100,0b10110011,0b11101001}
  crv_msk={0,0b00001001,0b00000011,0b00001100,0b00000110}
  
