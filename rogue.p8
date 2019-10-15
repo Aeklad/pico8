@@ -6,14 +6,16 @@ function _init()
  dpal=explodeval("0,1,1,2,1,13,6,4,4,9,3,13,1,13,14")
  dirx=explodeval("-1,1,0,0,1,1,-1,-1")
  diry=explodeval("0,0,-1,1,-1,1,1,-1")
- mob_ani=explodeval("240,192")
- mob_atk=explodeval("1,1")
- mob_hp=explodeval("5,1")
- mob_los=explodeval("4,4")
- itm_name=explode("broad sword,leather armor,red bean paste,ninja star,rusty sword")
- itm_type=explode("wep,arm,fud,thr,wep")
- itm_stat1=explodeval("2,0,1,1,1")
- itm_stat2=explodeval("0,2,0,0,0")
+ itm_name=explode("dagger,staff,short sword,broad sword,bastard sword,vorpal sword,cloth armor,leather armor,scale mail,chain mail,plate armor,magic plate,food 1,food 2,food 3,food 4,food 5,food 6,small rock,polished stone,balanced knife,throwing axe")
+ itm_type=explode("wep,wep,wep,wep,wep,wep,arm,arm,arm,arm,arm,arm,fud,fud,fud,fud,fud,fud,thr,thr,thr,thr")
+ itm_stat1=explodeval("1,2,3,4,5,6,0,0,0,0,1,2,1,2,3,4,5,6,1,2,3,4")
+ itm_stat2=explodeval("0,0,0,0,0,0,1,2,3,4,3,3,0,0,0,0,0,0,0,0,0,0")
+
+ mob_name=explode("player,slime,giant bat,skeleton,goblin,hydra,troll,cyclops,zorn")
+ mob_ani=explodeval("240,192,212,216,220,224,228,232,236")
+ mob_hp=explodeval("5,1,2,3,3,4,5,14,8")
+ mob_los=explodeval("4,4,4,4,4,4,4,4,4")
+ mob_atk=explodeval("1,1,2,1,2,3,3,5,5")
  crv_sig={0b11111111,0b11010110,0b01111100,0b10110011,0b11101001}
  crv_msk={0,0b00001001,0b00000011,0b00001100,0b00000110}
  
@@ -50,7 +52,7 @@ function startgame()
  buttbuff=-1
  skipai=false
  win=false
- winfloor=3
+ winfloor=9
  mob={}
  dmob={}
  p_mob=addmob(1,1,1)
@@ -198,7 +200,7 @@ function dobutt(butt)
  elseif butt==5 then
   showinv()
  elseif butt==4 then
-  mapgen()
+  genfloor(floor+1)
   unfog()
  end
 end
@@ -415,7 +417,7 @@ end
 function toval(_arr)
  local _retarr={}
  for _i in all(_arr) do
-  add(_retarr,flr(_i+0))
+  add(_retarr,flr(tonum(_i)))
  end
  return _retarr
 end
@@ -1024,6 +1026,14 @@ function cansee(m1,m2)
  return dist(m1.x,m1.y,m2.x,m2.y)<=m1.los and los(m1.x,m1.y,m2.x,m2.y)
 end
 function spawnmobs()
+ mobpool={}
+ for i=2,#mob_name do
+  if mob_minf[i]<=floor and mob_maxf[i]>=floor then
+   add(mob_pool[i])
+  end
+ end
+ if #mobpool==0 then return end
+  
  local minmons=3
  local placed,rpot=0,{}
  for r in all(rooms) do
@@ -1044,7 +1054,7 @@ function infestroom(r)
    x=r.x+flr(rnd(r.w))
    y=r.y+flr(rnd(r.h))
   until iswalkable(x,y,"checkmobs")
-   addmob(2,x,y)
+   addmob(getrnd(mobpool),x,y)
   end
  return target
 end
@@ -1397,8 +1407,9 @@ function nexttoroom(x,y)
 end
 function installdoors()
  for d in all(doors) do
-  if mget(d.x,d.y)==1 or mget(d.x,d.y)==4 and isdoor(d.x,d.y) and not next2tile(d.x,d.y,13) then
-   mset(d.x,d.y,13)
+  local dx,dy=d.x,d.y
+  if mget(dx,dy)==1 or mget(dx,dy)==4 and isdoor(dx,dy) and not next2tile(dx,dy,13) then
+   mset(dx,dy,13)
    snapshot()
   end
  end
@@ -1482,6 +1493,9 @@ function prettywalls()
  end
 end
 function decorooms()
+ tarr_dirt=explodeval("1,1,1,1,1,1,1,1,1,74,75,76")
+ tarr_fern=explodeval("1,1,1,1,75,75,74,74,70,71,72,73")
+ tarr_vase=explodeval("1,1,1,1,1,7,8")
  for r in all(rooms) do
   local funcs,func={
    deco_dirt,
@@ -1492,8 +1506,10 @@ function decorooms()
   }
   func=getrnd(funcs)
   for x=0,r.w-1 do
-   for y=1,r.h-1 do
-    func(r,r.x+x,r.y+y,x,y)
+   for y=r.h-1,1,-1 do
+    if mget(r,r.x+x,r.y+y,x,y)==1 then
+     func(r,r.x+x,r.y+y,x,y)
+    end
    end
   end
  end
@@ -1514,24 +1530,16 @@ function deco_carpet(r,tx,ty,x,y)
  end
 end
 function deco_dirt(r,tx,ty,x,y)
- local tarr=explodeval("1,1,1,1,1,1,1,1,1,74,75,76")
- if mget(tx,ty)==1 then
-  mset(tx,ty,getrnd(tarr))
- end
+ mset(tx,ty,getrnd(tarr_dirt))
 end
 function deco_fern(r,tx,ty,x,y)
- local tarr=explodeval("1,1,1,1,75,75,74,74,70,71,72,73")
- if mget(tx,ty)==1 then
-  mset(tx,ty,getrnd(tarr))
- end
+ mset(tx,ty,getrnd(tarr_fern))
 end
 function deco_vase(r,tx,ty,x,y)
- local tarr=explodeval("1,1,1,1,1,7,8")
- if mget(tx,ty)==1 and 
-    iswalkable(tx,ty,"checkmobs")
-    and not next2tile(tx,ty,13) 
-    and not bcomp(getsig(tx,ty),0,0b00001111) then
-  mset(tx,ty,getrnd(tarr))
+ if iswalkable(tx,ty,"checkmobs")
+ and not next2tile(tx,ty,13) 
+ and not bcomp(getsig(tx,ty),0,0b00001111) then
+  mset(tx,ty,getrnd(tarr_vase))
  end
 end
 __gfx__
