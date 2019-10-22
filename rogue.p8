@@ -43,6 +43,7 @@ end
 function _draw()
  _drw()
  drawind()
+ drawlogo() 
  --fadeperc=0
  checkfade()
  cursor(4,4)
@@ -56,6 +57,9 @@ function startgame()
  tani=0
  fadeperc=1
  buttbuff=-1
+
+ logo_t=240
+ logo_y=35
  skipai=false
  win=false
  winfloor=9
@@ -76,6 +80,7 @@ function startgame()
  thrdx,thrdy=0,-1
  _upd=update_game
  _drw=draw_game
+ st_steps,st_kills,st_meals,st_killer=0,0,0,""
  genfloor(0)
 end
 -->8
@@ -202,6 +207,7 @@ end
 
 function dobutt(butt)
  if butt<0 then return end
+ if logo_t>0 then logo_t=0 end
  if butt<4 then
   moveplayer(dirx[butt+1],diry[butt+1])
  elseif butt==5 then
@@ -269,7 +275,20 @@ function draw_game()
  for f in all(float) do
   oprint8(f.txt,f.x,f.y,f.c,0)
  end
- 
+end
+
+function drawlogo()
+ if logo_y>-24 then
+  logo_t-=1
+  if logo_t<0 then
+   logo_y+=logo_t/20
+  end
+  palt(12,true)
+  palt(0,false)
+  spr(144,7,logo_y,14,3)
+  palt()
+  oprint8("shepherds of the deep",19,logo_y+20,7,0)
+ end
 end
 
 function drawmob(m)
@@ -280,14 +299,33 @@ function drawmob(m)
   end
   draw_spr(get_frame(m.ani),m.x*8+m.ox,m.y*8+m.oy,col,m.flp)	
 end
-function draw_gover()
- cls(2)
- print("u dead",50,50,7)
-end
+--function draw_gover()
+-- cls(2)
+-- print("u dead",50,50,7)
+--end
+--
+--function draw_win()
+-- cls(2)
+-- print("u win",50,50,7)
+--end
 
-function draw_win()
- cls(2)
- print("u win",50,50,7)
+function draw_gover()
+ cls()
+ palt(12,true)
+ spr(gover_spr,gover_x,30,gover_w,2)
+ if not win then
+  print("killed by a "..st_killer,28,43,6)
+ end
+ palt()
+ color(5)
+ cursor(40,56)
+ if not win then
+  print("floor: "..floor)
+ end
+ print("steps: "..st_steps)
+ print("kills: "..st_kills)
+ print("meals: "..st_meals)
+ print("press x",46,90,5+abs(sin(time()/3)*2))
 end
 
 function animap()
@@ -306,6 +344,7 @@ function animap()
   end
  end
 end
+
 
 -->8
 --tools tab 3
@@ -437,6 +476,7 @@ function moveplayer(dx,dy)
  if iswalkable(destx,desty,"checkmobs") then
   sfx(63)
   mobwalk(p_mob,dx,dy)
+  st_steps+=1
   p_t=0
   _upd=update_pturn
  else
@@ -569,6 +609,11 @@ function hitmob(atkm,defm,rawdmg)
  defm.flash=10
  addfloat("-"..dmg,defm.x*8,defm.y*8,9)
  if defm.hp<=0 then
+  if defm != p_mob then 
+   st_kills+=1 
+  else
+   st_killer=atkm.name
+  end
   add(dmob,defm)
   del(mob,defm)
   defm.dur=10
@@ -605,12 +650,18 @@ end
 function checkend()
  if win then
   wind={}
+  gover_spr=112
+  gover_x=13
+  gover_w=13
   _upd=update_gover
-  _drw=draw_win
+  _drw=draw_gover
   fadeout(0.02)
   return false
  elseif p_mob.hp<=0 then
   wind={}
+  gover_spr=80 
+  gover_x=28
+  gover_w=9
   _upd=update_gover
   _drw=draw_gover
   fadeout(0.02)
@@ -713,6 +764,7 @@ end
 function eat(itm,mb)
 	local effect=itm_stat1[itm]
     showmsg(itm_name[itm]..itm_desc[itm],120)
+    if mb==p_mob then st_meals+=1 end
 	if effect==1 then
      --heal
      healmob(mb,1)
@@ -978,7 +1030,8 @@ function addmob(typ,mx,my)
   defmin=0,
   defmax=0,
   los=mob_los[typ],
-  task=ai_wait
+  task=ai_wait,
+  name=mob_name[typ]
  }
  for i=0,3 do
   add(m.ani,mob_ani[typ]+i)
@@ -1252,6 +1305,7 @@ function genfloor(f)
  mob={}
  add(mob,p_mob)
  fog=blankmap(0)
+ if floor==1 then st_steps=0 end
  if floor==0 then
   copymap(16,0)
  elseif floor==winfloor then
@@ -1264,14 +1318,21 @@ function genfloor(f)
 end
 
 function mapgen()
- copymap(48,0)
- rooms={}
- roomap=blankmap(0)
- doors={}
- genrooms()
- mazeworm()
- placeflags()
- carvedoors()
+
+ repeat
+  copymap(48,0)
+  rooms={}
+  roomap=blankmap(0)
+  doors={}
+  genrooms()
+  mazeworm()
+  placeflags()
+  carvedoors()
+  if #flaglib>1 then
+   debug[1]="Reconnect Area"
+  end
+until #flaglib==1
+ debug[1]=#flaglib
  carvescuts()
  startend()
  fillends()
@@ -1442,11 +1503,12 @@ end
 
 function placeflags()
  local curf=1
- flags=blankmap(0)
+ flags,flaglib=blankmap(0),{}
  for _x=0,15 do
   for _y=0,15 do
    if iswalkable(_x,_y) and flags[_x][_y]==0 then
     growflag(_x,_y,curf)
+    add(flaglib,curf)
     curf+=1
    end
   end
@@ -1488,7 +1550,7 @@ function carvedoors()
      _f1=flags[x1][y1]
      _f2=flags[x2][y2]
      if found and _f1!=_f2 then
-      add(drs,{x=_x,y=_y,f=_f1})
+      add(drs,{x=_x,y=_y,f1=_f1,f2=_f2})
      end
     end
    end
@@ -1498,7 +1560,8 @@ function carvedoors()
   add(doors,d)
   mset(d.x,d.y,1)
   snapshot()
-  growflag(d.x,d.y,d.f)
+  growflag(d.x,d.y,d.f1)
+  del(flaglib,d.f2)
  end
  until #drs==0
 end
