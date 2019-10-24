@@ -24,7 +24,9 @@ function _init()
  mob_spec=explode(",,,divdes,steals food,stun,ghost,slow,sleep")
  crv_sig=explodeval("255,214,124,179,233")
  crv_msk=explodeval("0,9,3,12,6")
- 
+ free_sig=explodeval("0,0,0,0,16,64,32,128,161,104,84,146")
+ free_msk=explodeval("8,4,2,1,6,12,9,3,10,5,10,5")
+
  wall_sig=explodeval("251,233,253,84,146,80,16,144,112,208,241,248,210,177,225,120,179,0,124,104,161,64,240,128,224,176,242,244,116,232,178,212,247,214,254,192,48,96,32,160,245,250,243,249,246,252")
  
  wall_msk=explodeval("0,6,0,11,13,11,15,13,3,9,0,0,9,12,6,3,12,15,3,7,14,15,0,15,6,12,0,0,3,6,12,9,0,9,0,15,15,7,15,14,0,0,0,0,0,0")
@@ -54,6 +56,7 @@ function _draw()
 end
 
 function startgame()
+ music(63)
  tani=0
  fadeperc=1
  buttbuff=-1
@@ -89,6 +92,7 @@ end
 function update_game()
  if talkwind then
   if getbutt()==5 then
+   sfx(53)
    talkwind.dur=0
    talkwind=nil
   end
@@ -103,6 +107,7 @@ function update_inv()
  --inventory
  move_mnu(curwind)
  if btnp(4) then
+  sfx(53)
   if curwind==invwind then
    _upd=update_game
    invwind.dur=0
@@ -112,6 +117,7 @@ function update_inv()
    curwind=invwind
   end
  elseif btnp(5) then
+  sfx(54)
   if curwind==invwind and invwind.cur!=3 then
    showuse()
   elseif curwind==usewind then
@@ -137,8 +143,10 @@ end
 
 function move_mnu(wnd)
  if btnp(2) then
+  sfx(56)
   wnd.cur-=1
  elseif btnp(3) then
+  sfx(56)
   wnd.cur+=1
  end
  wnd.cur=(wnd.cur-1)%#wnd.txt+1
@@ -184,6 +192,7 @@ end
 
 function update_gover()
  if btn(❎) then
+  sfx(54)
   fadeout()
   startgame()
  end
@@ -211,6 +220,7 @@ function dobutt(butt)
  if butt<4 then
   moveplayer(dirx[butt+1],diry[butt+1])
  elseif butt==5 then
+  sfx(54)
   showinv()
  elseif butt==4 then
   genfloor(floor+1)
@@ -266,14 +276,19 @@ function draw_game()
   end
  end
  
--- for x=0,15 do
---  for y=0,15 do
---    print(roomap[x][y],x*8,y*8,8)
---  end
--- end
 
  for f in all(float) do
   oprint8(f.txt,f.x,f.y,f.c,0)
+ end
+ --debug
+ if debugmap!=nil then
+  for x=0,15 do
+   for y=0,15 do
+    if debugmap[x][y]>0 then
+     spr(63,x*8,y*8)
+    end
+   end
+  end
  end
 end
 
@@ -541,7 +556,8 @@ function trig_bump(tle,destx,desty)
  elseif tle==6 then
   --stone tablet
   if floor==0 then
-   showtalk({" welcom to gip! "," please be careful "," it's super dangerous "," "})
+   sfx(54)
+   showtalk(explode(" welcom to gip!, please be careful, it's super dangerous, "))
   end
  elseif tle==110 then
   win=true
@@ -551,6 +567,7 @@ end
 function trig_step()
  local tle=mget(p_mob.x,p_mob.y)
  if tle==14 then 
+  sfx(55)
   p_mob.bless=0
   fadeout()
   genfloor(floor+1)
@@ -626,12 +643,14 @@ function healmob(mb,hp)
  mb.hp+=hp
  mb.flash=10
  addfloat("+"..hp,mb.x*8,mb.y*8,7)
+ sfx(51)
 end
 
 function stunmob(mb)
  mb.stun=true
  mb.flash=10
  addfloat("stun",mb.x*8-3,mb.y*8,7)
+ sfx(51)
 end
 
 function blessmob(mb,val)
@@ -645,31 +664,27 @@ function blessmob(mb,val)
   del(mob,mb)
   mb.dur=10
  end
+ sfx(51)
 end
 
 function checkend()
  if win then
-  wind={}
-  gover_spr=112
-  gover_x=13
-  gover_w=13
-  _upd=update_gover
-  _drw=draw_gover
-  fadeout(0.02)
+  music(23)
+  gover_spr, gover_x, gover_w=112,13,13
+  showgover()
   return false
  elseif p_mob.hp<=0 then
-  wind={}
-  gover_spr=80 
-  gover_x=28
-  gover_w=9
-  _upd=update_gover
-  _drw=draw_gover
-  fadeout(0.02)
+  music(21)
+  gover_spr, gover_x, gover_w=80,28,0
+  showgover()
   return false
  end
  return true
 end
-
+function showgover()
+ wind,_upd,_drw={},update_gover,draw_gover
+ fadeout(0.02)
+end
 function los(x1,y1,x2,y2)
  local frst,sx,sy,dx,dy=true
  if dist(x1,y1,x2,y2)== 1 then return true end
@@ -790,6 +805,7 @@ end
 function throw()
  local tx,ty=throwtile()
  local itm=inv[thrslt]
+ sfx(52)
  if inbounds(tx,ty) then
   local mb=getmob(tx,ty)
   if mb then
@@ -1305,7 +1321,10 @@ function genfloor(f)
  mob={}
  add(mob,p_mob)
  fog=blankmap(0)
- if floor==1 then st_steps=0 end
+ if floor==1 then
+  st_steps=0
+  music(0)
+ end
  if floor==0 then
   copymap(16,0)
  elseif floor==winfloor then
@@ -1355,10 +1374,14 @@ end
 
 function genrooms()
  local fmax,rmax=5,4
- local mw,mh=6,6
+ local mw,mh=10,10
  repeat
   local r=rndroom(mw,mh)
   if placeroom(r) then
+   if #rooms==1 then
+    mw/=2
+    mh/=2
+   end
    rmax-=1
    snapshot()
   else
@@ -1469,12 +1492,7 @@ function cancarve(x,y,walk)
  if not inbounds(x,y) then return false end
  local walk=walk==nil and iswalkable(x,y) or walk
  if iswalkable(x,y)==walk then 
-  local sig=getsig(x,y)
-  for i=1,#crv_sig do
-   if bcomp(sig,crv_sig[i],crv_msk[i]) then
-    return true
-   end
-  end
+  return sigarray(getsig(x,y),crv_sig,crv_msk)!=0 
  end
  return false
 end
@@ -1495,6 +1513,15 @@ function getsig(x,y)
   sig=bor(sig,shl(digit,8-i))
  end
  return sig
+end
+
+function sigarray(sig,arr,marr)
+ for i=1,#arr do
+  if bcomp(sig,arr[i],marr[i]) then
+   return i
+  end
+ end
+ return 0
 end
 
 ----------------------
@@ -1676,18 +1703,46 @@ function startend()
  end
  mset(ex,ey,14)
 
+ debugmap=blankmap(0)
  for x=0,15 do
   for y=0,15 do
    local tmp=distmap[x][y]
-   if tmp>=0 and tmp<low and cancarve(x,y) then
-    px,py=x,y
-    low=tmp
+   if tmp>=0 then
+    local score=starscore(x,y)
+    tmp=tmp-score
+    if tmp<low then
+     px,py,low=x,y,tmp
+    end
    end
+   --debug
   end
  end
  mset(px,py,15)
  p_mob.x=px
  p_mob.y=py
+end
+
+function starscore(x,y)
+ if roomap[x][y]==0 then
+  if nexttoroom(x,y) then return -1 end
+  if freestanding(x,y)>0 then
+   return 5
+  else
+   if cancarve(x,y) then
+    return 0
+   end
+  end
+ else
+  local scr=freestanding(x,y)
+  if scr>0 then
+   if scr<=8 then
+    return 3
+   else
+    return 0 
+   end
+  end
+ end
+ return -1
 end
 
 function next2tile(_x,_y,tle)
@@ -1705,12 +1760,11 @@ function prettywalls()
   for y=0,15 do
    local tle=mget(x,y)
    if tle==2 then
-    local sig,tle=getsig(x,y),3
-    for i=1,#wall_sig do
-     if bcomp(sig,wall_sig[i],wall_msk[i]) then
-      tle=i+15
-      break
-     end
+    local ntle=sigarray(getsig(x,y),wall_sig,wall_msk)
+    if ntle==0 then
+     tle=3
+    else
+     tle=15+ntle
     end
     mset(x,y,tle)
    elseif tle == 1 then
@@ -1798,7 +1852,9 @@ function placechest(r,rare)
   mset(x,y,10)
  end
 end
-
+function freestanding(x,y)
+ return sigarray(getsig(x,y),free_sig,free_msk)
+end
 __gfx__
 00000000000000006606666000000000110111100000000044444000000000004444444000000000000000004444444000444000444444404444000000000000
 00000000000000000000000000000000000000000000000004444400044444000444440044444400000000004000004044444440404040400000000011110000
@@ -1824,14 +1880,14 @@ __gfx__
 0000ddd0ddddddd0ddd00000ddddddd0ddddddd0ddddddd0ddd0ddd0ddddddd0ddddddd0ddd0ddd00000ddd0ddd00000ddd00000ddddddd00000ddd0ddd00000
 0000ddd00ddddd00ddd000000dddddd0dddddd000dddddd0ddd0ddd0dddddd00ddddddd0ddd0ddd00000ddd0ddd00000ddd00000ddddddd00000ddd0ddd00000
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-0000ddd0ddddddd0ddd00000ddddddd0ddd0ddd0ddd0ddd0ddd0ddd0ddd0ddd00000ddd0ddd000000000ddd000000000ddd0ddd0ddd000000000000000000000
-0000ddd0ddddddd0ddd00000ddddddd0ddd0ddd0ddd0ddd0ddd0ddd0ddd0ddd00000ddd0ddd000000000ddd000000000ddd0ddd0ddd000000000000000000000
+0000ddd0ddddddd0ddd00000ddddddd0ddd0ddd0ddd0ddd0ddd0ddd0ddd0ddd00000ddd0ddd000000000ddd000000000ddd0ddd0ddd000000000000088000088
+0000ddd0ddddddd0ddd00000ddddddd0ddd0ddd0ddd0ddd0ddd0ddd0ddd0ddd00000ddd0ddd000000000ddd000000000ddd0ddd0ddd000000000000080000008
 00000dd0ddddddd0dd000000ddddddd0ddd0ddd0ddd0ddd0ddd0ddd0ddd0ddd000000dd0dd00000000000dd000000000dd000dd0dd0000000000000000000000
 00000000000000000000000000000000ddd0ddd0ddd00000ddd0ddd00000ddd00000000000000000000000000000000000000000000000000000000000000000
 000000000000000000000000ddddddd0ddd0ddd0ddddddd0ddddddd0ddddddd0dd00000000000dd000000dd0dd000dd000000000dd0000000000000000000000
 000000000000000000000000ddddddd0ddd0ddd0ddddddd0ddddddd0ddddddd0ddd000000000ddd00000ddd0ddd0ddd000000000ddd000000000000000000000
-000000000000000000000000ddddddd0ddd0ddd00dddddd00ddddd00dddddd00ddd000000000ddd00000ddd0ddd0ddd000000000ddd000000000000000000000
-00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000000000000000000000000ddddddd0ddd0ddd00dddddd00ddddd00dddddd00ddd000000000ddd00000ddd0ddd0ddd000000000ddd000000000000080000008
+00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000088000088
 d000000000000000000000d000000000011111001101111000000000100000001010010000000000000000100000000000000000000000000000000000000000
 000000000d0000000000000000000d00110010100000000010000000101000100001100010101010001000100100010000001000000000000000000000000000
 dd000000d000000000000dd0000000d0101001101110111010100000101010101010010000000000010000000000000001000000000000000000000000000000
@@ -2207,3 +2263,4 @@ __music__
 00 41424344
 00 41424344
 03 00424344
+
