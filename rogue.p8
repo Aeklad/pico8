@@ -648,11 +648,7 @@ function hitmob(atkm,defm,rawdmg)
  defm.hp-=dmg
  defm.flash=10
  addfloat("-"..dmg,defm.x*8,defm.y*8,9)
- if defm==p_mob then
-  shake=.07
- else
-  shake=.04
- end
+ shake=defm==p_mob and 0.08 or 0.04
  if defm.hp<=0 then
   if defm != p_mob then 
    st_kills+=1 
@@ -716,15 +712,14 @@ end
 function los(x1,y1,x2,y2)
  local frst,sx,sy,dx,dy=true
  if dist(x1,y1,x2,y2)== 1 then return true end
+ if y1>y2 then
+  x1,x2,y1,y2=x2,x1,y2,y1
+ end
+  sy,dy=1,y2-y1
  if x1<x2 then
   sx,dx=1,x2-x1
- else
-  sx,dx=-1,x1-x2
- end
- if y1<y2 then
-  sy,dy=1,y2-y1
  else 
-  sy,dy=-1,y1-y2
+  sx,dx=-1,x1-x2
  end
  local err,e2=dx-dy 
  while not(x1==x2 and y1==y2) do
@@ -1048,7 +1043,9 @@ function triguse()
  else
   invwind.dur=0
   statwind.dur=0
-  hintwind.dur=0
+  if hintwind then
+   hintwind.dur=0
+  end
  end
 end
 
@@ -1271,6 +1268,7 @@ function spawnmobs()
 end
 
 function infestroom(r)
+ if r.nospawn then return 0 end
  local target,x,y=2+flr(rnd((r.w*r.h)/6-1))
  target=min(5,target)
  for i=1,target do
@@ -1381,7 +1379,7 @@ function genfloor(f)
  elseif floor==winfloor then
   copymap(32,0)
  else
-  fog=blankmap(0)
+  fog=blankmap(1)
   mapgen()
   unfog()
  end
@@ -1768,8 +1766,10 @@ function startend()
      px,py,low=x,y,tmp
     end
    end
-   --debug
   end
+ end
+ if roomap[px][py]>0 then
+  rooms[roomap[px][py]].nospawn=true
  end
  mset(px,py,15)
  p_mob.x=px
