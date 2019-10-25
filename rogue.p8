@@ -4,6 +4,7 @@ __lua__
 --help!!
 function _init()
  t=0
+ shake=0
  dpal=explodeval("0,1,1,2,1,13,6,4,4,9,3,13,1,13,14")
  dirx=explodeval("-1,1,0,0,1,1,-1,-1")
  diry=explodeval("0,0,-1,1,-1,1,1,-1")
@@ -43,6 +44,7 @@ function _update60()
 end
 
 function _draw()
+ doshake()
  _drw()
  drawind()
  drawlogo() 
@@ -56,6 +58,7 @@ function _draw()
 end
 
 function startgame()
+ --poke(0x3101,194)--start loop
  music(63)
  tani=0
  fadeperc=1
@@ -105,13 +108,18 @@ end
 
 function update_inv()
  --inventory
- move_mnu(curwind)
+ if move_mnu(curwind) and curwind==invwind then
+  showhint()
+ end
  if btnp(4) then
   sfx(53)
   if curwind==invwind then
    _upd=update_game
    invwind.dur=0
    statwind.dur=0
+   if hintwind then
+    hintwind.dur=0
+   end
   elseif curwind==usewind then
    curwind.dur=0
    curwind=invwind
@@ -142,14 +150,18 @@ function update_throw()
 end
 
 function move_mnu(wnd)
+ local moved=false
  if btnp(2) then
   sfx(56)
   wnd.cur-=1
+  moved=true
  elseif btnp(3) then
   sfx(56)
   wnd.cur+=1
+  moved=true
  end
  wnd.cur=(wnd.cur-1)%#wnd.txt+1
+ return moved
 end
 
 function update_pturn()
@@ -236,11 +248,11 @@ function draw_game()
  animap()
  map()
  for m in all(dmob) do
-  if sin(time()*8)>0 then
+  if sin(time()*8)>0 or m==p_mob then
    drawmob(m)
   end
   m.dur -=1
-  if m.dur<=0 then
+  if m.dur<=0 and m!=p_mob then 
    del(dmob,m)
   end
  end
@@ -482,6 +494,12 @@ function toval(_arr)
  return _retarr
 end
 
+function doshake()
+ local shakex,shakey=16-rnd(32),16-rnd(32)
+ camera(shakex*shake,shakey*shake)
+ shake*=.95
+ if (shake<0.05) shake=0
+end
 -->8
 --gameplay tab 4
 function moveplayer(dx,dy)
@@ -523,10 +541,13 @@ function trig_bump(tle,destx,desty)
   if rnd(3)<1 and floor>0 then
    if rnd(5)<1 then
     addmob(getrnd(mobpool),destx,desty)
+    sfx(60)
    else
     if freeinvslot()==0 then
      showmsg("inventory full",120)
+     sfx(60)
     else
+     sfx(61)
      local itm=getrnd(fipool_com)
      takeitem(itm)
      showmsg(itm_name[itm].."!",60)
@@ -537,8 +558,10 @@ function trig_bump(tle,destx,desty)
   --chest
   if freeinvslot()==0 then
    showmsg("inventory full",120)
+   sfx(60)
    skipai=true
   else
+   sfx(61)
    local itm=getrnd(fipool_com)
    if tle==12 then
     itm=getitm_rar()
@@ -625,6 +648,11 @@ function hitmob(atkm,defm,rawdmg)
  defm.hp-=dmg
  defm.flash=10
  addfloat("-"..dmg,defm.x*8,defm.y*8,9)
+ if defm==p_mob then
+  shake=.07
+ else
+  shake=.04
+ end
  if defm.hp<=0 then
   if defm != p_mob then 
    st_kills+=1 
@@ -778,8 +806,11 @@ end
 
 function eat(itm,mb)
 	local effect=itm_stat1[itm]
-    showmsg(itm_name[itm]..itm_desc[itm],120)
-    if mb==p_mob then st_meals+=1 end
+ if not itm_known[itm] then
+  showmsg(itm_name[itm]..itm_desc[itm],120)
+  itm_known[itm]=true
+ end
+ if mb==p_mob then st_meals+=1 end
 	if effect==1 then
      --heal
      healmob(mb,1)
@@ -962,6 +993,7 @@ function showinv()
  end 
  statwind=addwind(5,5,84,13,{txt.."atk:"..p_mob.atk.." def:"..p_mob.defmin.."-"..p_mob.defmax})
  curwind=invwind
+ showhint()
 end
 
 function showuse()
@@ -1016,11 +1048,25 @@ function triguse()
  else
   invwind.dur=0
   statwind.dur=0
+  hintwind.dur=0
  end
 end
 
 function floormsg()
  showmsg("floor"..floor,120)
+end
+function showhint()
+ if hintwind then
+  hintwind.dur=0
+  hintwind=nil
+ end
+ if invwind.cur>3 then
+  local itm=inv[invwind.cur-3]
+  if itm and itm_type[itm]=="fud" then
+   local txt = itm_known[itm] and itm_name[itm]..itm_desc[itm] or "???"
+   hintwind = addwind(5,78,#txt*4+7,13,{txt})
+  end
+ end
 end
 
 -->8
@@ -1115,6 +1161,8 @@ function doai()
  if moving then
   _upd=update_aiturn
   p_t=0
+ else
+  p_mob.stun=false
  end
 end
 
@@ -1229,7 +1277,7 @@ function infestroom(r)
   repeat
    x=r.x+flr(rnd(r.w))
    y=r.y+flr(rnd(r.h))
-  until iswalkable(x,y,"checkmobs")
+  until iswalkable(x,y,"checkmobs") and (mget(x,y)==1 or mget(x,y)==4)
    addmob(getrnd(mobpool),x,y)
   end
  return target
@@ -1300,12 +1348,14 @@ end
 function foodnames()
  local fud,fu=explode("potion,potion,potion,potion,potion,potion,potion,potion,potion,potion,potion,potion")
  local adj,ad=explode("red,yellow,green,blue,orange,purple,white,black,clear,brown,gray,milky")
+ itm_known={}
  for i=1,#itm_name do
   if itm_type[i]=="fud" then
    fu,ad=getrnd(fud),getrnd(adj)
    del(fud,fu)
    del(adj,ad)
    itm_name[i]=ad.." "..fu
+   itm_known[i]=false
   end
  end
 end
@@ -1323,6 +1373,7 @@ function genfloor(f)
  fog=blankmap(0)
  if floor==1 then
   st_steps=0
+ --poke(0x3101,66)--end loop
   --music(0)
  end
  if floor==0 then
@@ -1655,8 +1706,9 @@ function isdoor(x,y)
  return false
 end
 
-function nexttoroom(x,y)
- for i=1,4 do
+function nexttoroom(x,y,dirs)
+ local dirs = dirs or 4
+ for i=1,dirs do
   if inbounds(x+dirx[i],y+diry[i]) and roomap[x+dirx[i]][y+diry[i]]!=0 then 
    return true
   end
@@ -1710,9 +1762,9 @@ function startend()
   for y=0,15 do
    local tmp=distmap[x][y]
    if tmp>=0 then
-    local score=starscore(x,y)
+    local score=starscore(x,y,8)
     tmp=tmp-score
-    if tmp<low then
+    if tmp<low and score>=0 then
      px,py,low=x,y,tmp
     end
    end
@@ -1737,11 +1789,7 @@ function starscore(x,y)
  else
   local scr=freestanding(x,y)
   if scr>0 then
-   if scr<=8 then
-    return 3
-   else
-    return 0 
-   end
+   return scr<=8 and 3 or 0
   end
  end
  return -1
@@ -1763,11 +1811,7 @@ function prettywalls()
    local tle=mget(x,y)
    if tle==2 then
     local ntle=sigarray(getsig(x,y),wall_sig,wall_msk)
-    if ntle==0 then
-     tle=3
-    else
-     tle=15+ntle
-    end
+    tle=ntle==0 and 3 or 15+ntle
     mset(x,y,tle)
    elseif tle == 1 then
     if not iswalkable(x,y-1) then
@@ -1781,14 +1825,21 @@ function decorooms()
  tarr_dirt=explodeval("1,74,75,76")
  tarr_fern=explodeval("1,70,70,70,71,71,71,72,73,74")
  tarr_vase=explodeval("1,1,7,8")
- local funcs,func={
+ local funcs,func,rpot={
   deco_dirt,
   deco_torch,
   deco_carpet,
   deco_fern,
   deco_vase
- },deco_vase
+ },deco_vase,{}
+
  for r in all(rooms) do
+  add(rpot,r)
+ end
+
+ repeat 
+  local r=getrnd(rpot)
+  del(rpot,r)
   for x=0,r.w-1 do
    for y=r.h-1,1,-1 do
     if mget(r.x+x,r.y+y)==1 then
@@ -1797,8 +1848,9 @@ function decorooms()
    end
   end
   func=getrnd(funcs)
- end
+ until #rpot==0
 end
+
 function deco_torch(r,tx,ty,x,y)
  if rnd(3)>1 and y%2==1 and not next2tile(tx,ty,13) then
   if x==0 then
@@ -1848,11 +1900,12 @@ function placechest(r,rare)
   x=r.x+flr(rnd(r.w-2))+1
   y=r.y+flr(rnd(r.h-2))+1
  until mget(x,y)==1 
- if rare then
-  mset(x,y,12)
- else
-  mset(x,y,10)
- end
+ --if rare then
+  --mset(x,y,12)
+ --else
+  --mset(x,y,10)
+ --end
+ mset(x,y,rare and 10 or 12)
 end
 function freestanding(x,y)
  return sigarray(getsig(x,y),free_sig,free_msk)
