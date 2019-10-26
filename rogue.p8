@@ -21,8 +21,9 @@ function _init()
  mob_los=explodeval("4,4,4,4,4,4,4,4,4")
  mob_atk=explodeval("1,1,2,1,2,3,3,5,5")
  mob_minf=explodeval("1,1,2,3,4,5,6,7,8")
- mob_maxf=explodeval("1,3,4,5,6,7,8,8,8")
+ mob_maxf=explodeval("8,8,8,8,8,8,8,8,8")
  mob_spec=explode(",,,divdes,steals food,stun,ghost,slow,sleep")
+ mob_loot=explodeval("13,14,15,16,17,18,19,20,21,22")
  crv_sig=explodeval("255,214,124,179,233")
  crv_msk=explodeval("0,9,3,12,6")
  free_sig=explodeval("0,0,0,0,16,64,32,128,161,104,84,146")
@@ -77,12 +78,12 @@ function startgame()
  inv,eqp={},{}
  makeipool()
  foodnames()
- takeitem(17)
- takeitem(18)
+ takeitem(16)
+ takeitem(16)
  wind={}
  float={}
  talkwind = nil
- hpwind=addwind(5,5,28,13,{})
+ hpwind=addwind(5,5,38,13,{})
  thrdx,thrdy=0,-1
  _upd=update_game
  _drw=draw_game
@@ -234,8 +235,8 @@ function dobutt(butt)
  elseif butt==5 then
   sfx(54)
   showinv()
- elseif butt==4 then
-  genfloor(floor+1)
+ --elseif butt==4 then
+  --genfloor(floor+1)
  end
 end
  
@@ -656,6 +657,18 @@ function hitmob(atkm,defm,rawdmg)
    st_killer=atkm.name
   end
   add(dmob,defm)
+  defm.loot=flr(rnd()*13+(5+floor))
+  if freeinvslot()>0 then
+   if defm.loot>12 and defm.loot<23 then
+    takeitem(defm.loot)
+    if defm!=p_mob then 
+     showmsg("found! "..itm_name[defm.loot],60) 
+    end
+   end
+  else
+   showmsg("inventory full",60)
+   sfx(60)
+  end
   del(mob,defm)
   defm.dur=10
  end
@@ -1050,7 +1063,7 @@ function triguse()
 end
 
 function floormsg()
- showmsg("floor"..floor,120)
+ showmsg("floor "..floor,120)
 end
 function showhint()
  if hintwind then
@@ -1079,6 +1092,7 @@ function addmob(typ,mx,my)
   ani={},
   flash=0,
   stun=false,
+  stimer=0,
   charge=1,
   lastmoved=false,
   bless=0,
@@ -1090,7 +1104,8 @@ function addmob(typ,mx,my)
   defmax=0,
   los=mob_los[typ],
   task=ai_wait,
-  name=mob_name[typ]
+  name=mob_name[typ],
+  loot=13
  }
  for i=0,3 do
   add(m.ani,mob_ani[typ]+i)
@@ -1148,7 +1163,8 @@ function doai()
   if m!=p_mob then  
    m.mov=nil
    if m.stun then
-    m.stun=false
+    m.stimer+=1
+    if m.stimer>=2 then m.stun=false end
    else
     m.lastmoved=m.task(m)
     moving=m.lastmoved or moving
@@ -1396,9 +1412,6 @@ function mapgen()
   mazeworm()
   placeflags()
   carvedoors()
-  if #flaglib>1 then
-   debug[1]="reconnect area"
-  end
 until #flaglib==1
  debug[1]=#flaglib
  carvescuts()
