@@ -1880,7 +1880,7 @@ function deco_vase(r,tx,ty,x,y)
  end
 end
 function spawnchests()
- local chestdice,rpot,rare,place=explodeval("0,1,1,1,2,3"),{},true
+ local chestdice,rpot,rare,place=explodeval("1,l,2,2,2,3"),{},true
  place=getrnd(chestdice)
  for r in all(rooms) do
   add(rpot,r)
@@ -1905,7 +1905,7 @@ function placechest(r,rare)
  --else
   --mset(x,y,10)
  --end
- mset(x,y,rare and 10 or 12)
+ mset(x,y,rare and 12 or 10)
 end
 function freestanding(x,y)
  return sigarray(getsig(x,y),free_sig,free_msk)
