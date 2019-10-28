@@ -21,7 +21,7 @@ function _init()
  mob_los=explodeval("4,4,4,4,4,4,4,4,4")
  mob_atk=explodeval("1,1,2,1,2,3,3,5,5")
  mob_minf=explodeval("1,1,2,3,4,5,6,7,8")
- mob_maxf=explodeval("3,5,6,7,8,8,8,8,8")
+ mob_maxf=explodeval("2,3,4,5,6,7,8,8,8")
  mob_spec=explode(",,,divdes,steals food,stun,ghost,slow,sleep")
  mob_loot=explodeval("0,0,0,0,0,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14")
  crv_sig=explodeval("255,214,124,179,233")
@@ -68,7 +68,7 @@ function startgame()
  logo_y=35
  skipai=false
  win=false
- winfloor=1
+ winfloor=9
  mob={}
  dmob={}
  p_mob=addmob(1,1,1)
@@ -329,7 +329,7 @@ function draw_gover()
  palt(12,true)
  spr(gover_spr,gover_x,30,gover_w,2)
  if not win then
-  print("killed by a "..st_killer,25,46,6)
+  print("killed by a "..st_killer,20,46,6)
  end
  palt()
  color(5)
@@ -699,7 +699,7 @@ function checkend()
   return false
  elseif p_mob.hp<=0 then
   music(21)
-  gover_spr, gover_x, gover_w=80,28,8
+  gover_spr, gover_x, gover_w=80,20,9
   showgover()
   return false
  end
