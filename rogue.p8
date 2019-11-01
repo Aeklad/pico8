@@ -82,12 +82,12 @@ function startgame()
  talkwind = nil
  hpwind=addwind(5,5,38,13,{})
  thrdx,thrdy=0,-1
- takeitem(18)
- takeitem(18)
- takeitem(18)
- takeitem(17)
- takeitem(17)
- takeitem(17)
+ --takeitem(18)
+ --takeitem(18)
+ --takeitem(18)
+ --takeitem(17)
+ --takeitem(17)
+ --takeitem(17)
  _upd=update_game
  _drw=draw_game
  st_steps,st_kills,st_meals,st_killer=0,0,0,""
@@ -332,7 +332,6 @@ function drawmob(m)
   elseif m.bless>0 then
    col=10
   end
-  debug[1]=m.flash
   draw_spr(m.col,get_frame(m.ani),m.x*8+m.ox,m.y*8+m.oy,col,m.flp)	
 end
 
