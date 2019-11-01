@@ -17,6 +17,7 @@ function _init()
  itm_desc=explode(",,,,,,,,,,,, heals, heals a lot, increases hp, stuns, is cursed, is blessed,,,,")
  mob_name=explode("player,slime    ,giant bat,skeleton ,goblin   ,hydra    ,troll    ,cyclops   ,zorn     ")
  mob_ani=explodeval("240,192,196,200,204,208,212,216,220")
+ mob_col=explodeval("7,5,5,6,11,13,12,15,15")
  mob_hp=explodeval("5,1,2,3,3,4,5,14,8")
  mob_los=explodeval("4,4,4,4,4,4,4,4,4")
  mob_atk=explodeval("1,1,2,1,2,3,3,5,5")
@@ -81,6 +82,12 @@ function startgame()
  talkwind = nil
  hpwind=addwind(5,5,38,13,{})
  thrdx,thrdy=0,-1
+ takeitem(18)
+ takeitem(18)
+ takeitem(18)
+ takeitem(17)
+ takeitem(17)
+ takeitem(17)
  _upd=update_game
  _drw=draw_game
  st_steps,st_kills,st_meals,st_killer=0,0,0,""
@@ -316,12 +323,17 @@ function drawlogo()
 end
 
 function drawmob(m)
-  local col=7
+  local col=m.col
   if m.flash>0 then
    m.flash-=1
    col=4
+  elseif m.bless<0 then
+   col=3
+  elseif m.bless>0 then
+   col=10
   end
-  draw_spr(get_frame(m.ani),m.x*8+m.ox,m.y*8+m.oy,col,m.flp)	
+  debug[1]=m.flash
+  draw_spr(m.col,get_frame(m.ani),m.x*8+m.ox,m.y*8+m.oy,col,m.flp)	
 end
 
 function draw_gover()
@@ -368,8 +380,8 @@ function get_frame(_ani)
 	return _ani[flr(t/15)%#_ani+1]
 end
 
-function draw_spr(_spr,_x,_y,_c,_flip)
- pal(7,_c)
+function draw_spr(_mob_default_color,_spr,_x,_y,_c,_flip)
+ pal(_mob_default_color,_c)
  spr(_spr,_x,_y,1,1,_flip)
  pal()
 end
@@ -625,6 +637,7 @@ end
 function hitmob(atkm,defm,rawdmg)
  local dmg=atkm and atkm.atk or rawdmg
  --add curse/bless
+ local col=defm.col
  if defm.bless<0 then
   dmg*=2
  elseif defm.bless>0 then
@@ -1084,6 +1097,7 @@ function addmob(typ,mx,my)
   flp=false,
   ani={},
   flash=0,
+  col=mob_col[typ],
   stun=false,
   stimer=0,
   charge=1,
