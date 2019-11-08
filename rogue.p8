@@ -8,13 +8,13 @@ function _init()
  dpal=explodeval("0,1,1,2,1,13,6,4,4,9,3,13,1,13,14")
  dirx=explodeval("-1,1,0,0,1,1,-1,-1")
  diry=explodeval("0,0,-1,1,-1,1,1,-1")
- itm_name=explode("dagger,staff,short sword,broad sword,bastard sword,vorpal sword,cloth armor,leather armor,scale mail,chain mail,plate armor,magic plate,food 1,food 2,food 3,food 4,food 5,food 6,small rock,polished stone,balanced knife,throwing axe")
- itm_type=explode("wep,wep,wep,wep,wep,wep,arm,arm,arm,arm,arm,arm,fud,fud,fud,fud,fud,fud,thr,thr,thr,thr")
- itm_stat1=explodeval("1,2,3,4,5,6,0,0,0,0,1,2,1,2,3,4,5,6,1,2,3,4")
- itm_stat2=explodeval("0,0,0,0,0,0,1,2,3,4,3,3,1,1,1,1,1,1,0,0,0,0")
- itm_minf=explodeval("1,2,3,4,5,6,1,2,3,4,5,6,1,1,1,1,1,1,1,2,3,4")
- itm_maxf=explodeval("3,4,5,6,7,8,3,4,5,6,7,8,8,8,8,8,8,8,4,6,7,8")
- itm_desc=explode(",,,,,,,,,,,, heals, heals a lot, increases hp, stuns, is cursed, is blessed,,,,")
+ itm_name=explode("dagger,staff,short sword,broad sword,bastard sword,vorpal sword,cloth armor,leather armor,scale mail,chain mail,plate armor,magic plate,food 1,food 2,food 3,food 4,food 5,food 6,food 7,small rock,polished stone,balanced knife,throwing axe")
+ itm_type=explode("wep,wep,wep,wep,wep,wep,arm,arm,arm,arm,arm,arm,fud,fud,fud,fud,fud,fud,fud,thr,thr,thr,thr")
+ itm_stat1=explodeval("1,2,3,4,5,6,0,0,0,0,1,2,1,2,3,4,5,6,7,1,2,3,4")
+ itm_stat2=explodeval("0,0,0,0,0,0,1,2,3,4,3,3,1,1,1,1,1,1,1,0,0,0,0")
+ itm_minf=explodeval("1,2,3,4,5,6,1,2,3,4,5,6,1,1,1,1,1,1,1,2,3,4,4")
+ itm_maxf=explodeval("3,4,5,6,7,8,3,4,5,6,7,8,8,8,8,8,8,8,4,6,7,8,8")
+ itm_desc=explode(",,,,,,,,,,,, heals, heals a lot, increases hp, stuns, is cursed, is blessed, freezes,,,")
  mob_name=explode("player,slime    ,giant bat,skeleton ,goblin   ,hydra    ,troll    ,cyclops   ,zorn     ")
  mob_ani=explodeval("240,192,196,200,204,208,212,216,220")
  mob_col=explodeval("7,5,5,6,11,13,12,15,15")
@@ -24,7 +24,7 @@ function _init()
  mob_minf=explodeval("1,1,2,3,4,5,6,7,8")
  mob_maxf=explodeval("2,3,4,5,6,7,8,8,8")
  mob_spec=explode(",,,divdes,steals food,stun,ghost,slow,sleep")
- mob_loot=explodeval("0,0,0,0,0,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14")
+ mob_loot=explodeval("0,0,0,0,0,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15")
  crv_sig=explodeval("255,214,124,179,233")
  crv_msk=explodeval("0,9,3,12,6")
  free_sig=explodeval("0,0,0,0,16,64,32,128,161,104,84,146")
@@ -83,12 +83,12 @@ function startgame()
  talkwind = nil
  hpwind=addwind(5,5,38,13,{})
  thrdx,thrdy=0,-1
- --takeitem(18)
- --takeitem(18)
- --takeitem(18)
- --takeitem(17)
- --takeitem(17)
- --takeitem(17)
+ --takeitem(19)
+ --takeitem(19)
+ --takeitem(19)
+ --takeitem(19)
+ --takeitem(19)
+ --takeitem(19)
  _upd=update_game
  _drw=draw_game
  st_steps,st_kills,st_meals,st_killer=0,0,0,""
@@ -170,6 +170,10 @@ function move_mnu(wnd)
 end
 
 function update_pturn()
+ if p_mob.freeze then 
+  st_killer="cold drink"
+  p_mob.hp=0
+ end
 
  dobuttbuff() 
  p_t=min(p_t+.125,1)
@@ -186,6 +190,7 @@ function update_pturn()
   skipai=false 
  end
 end
+
 function update_aiturn()
 
  dobuttbuff() 
@@ -334,8 +339,10 @@ function drawmob(m)
    col=10
   elseif m.stun then
    col=2
+  elseif m.freeze then
+   col=12
   end
-  draw_spr(m.col,get_frame(m.ani),m.x*8+m.ox,m.y*8+m.oy,col,m.flp)	
+  draw_spr(m.col,get_frame(m,m.ani),m.x*8+m.ox,m.y*8+m.oy,col,m.flp)	
 end
 
 function draw_gover()
@@ -378,8 +385,12 @@ end
 -->8
 --tools tab 3
 
-function get_frame(_ani)
-	return _ani[flr(t/15)%#_ani+1]
+function get_frame(_mob,_ani)
+ if not _mob.freeze then
+  return _ani[flr(t/15)%#_ani+1]
+ else
+  return _mob.frame
+ end
 end
 
 function draw_spr(_mob_default_color,_spr,_x,_y,_c,_flip)
@@ -640,7 +651,6 @@ end
 function hitmob(atkm,defm,rawdmg)
  local dmg=atkm and atkm.atk or rawdmg
  --add curse/bless
- local col=defm.col
  if defm.bless<0 then
   dmg*=2
  elseif defm.bless>0 then
@@ -691,6 +701,12 @@ function stunmob(mb)
  mb.stun=true
  mb.flash=10
  addfloat("stun",mb.x*8-3,mb.y*8,7)
+ sfx(62)
+end
+function freeze_mob(mb)
+ mb.freeze=true
+ mb.flash=10
+ addfloat("freeze",mb.x*8-3,mb.y*8,7)
  sfx(62)
 end
 
@@ -844,6 +860,9 @@ function eat(itm,mb)
     elseif effect==6 then
      --bless
      blessmob(mb,1)
+    elseif effect==7 then
+     --freeze
+     freeze_mob(mb)
 	end
 end
 
@@ -1099,8 +1118,10 @@ function addmob(typ,mx,my)
   oy=0,
   flp=false,
   ani={},
+  frame=(mob_ani[typ])+flr(rnd(4)),
   flash=0,
   col=mob_col[typ],
+  freeze=false,
   stun=false,
   stimer=0,
   charge=1,
@@ -1172,7 +1193,7 @@ function doai()
  for m in all(mob) do
   if m!=p_mob then  
    m.mov=nil
-   if m.stun then
+   if m.stun or m.freeze then
     m.stimer+=1
     if m.stimer>=2 then m.stun=false end
    else
