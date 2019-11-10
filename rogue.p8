@@ -340,7 +340,7 @@ function drawmob(m)
   elseif m.stun then
    col=2
   elseif m.freeze then
-   col=12
+   col=7
   end
   draw_spr(m.col,get_frame(m,m.ani),m.x*8+m.ox,m.y*8+m.oy,col,m.flp)	
 end
