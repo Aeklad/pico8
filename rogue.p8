@@ -746,11 +746,18 @@ function blessmob(mb,val)
  sfx(62)
 end
 
-function rob(mb)
- local loot = inv[]--loop through inv steal first av
- --available item
- addfloat("stole!",mb.x*8-5,mb.y*8,7)
- eat(inv[3],mb)
+function rob(mb,target)
+ for i= 1,6 do
+  local itm=inv[i]
+  if itm_type[itm]=="fud" then
+   addfloat("stole!",mb.x*8-30,mb.y*8,5)
+   eat(itm,mb)
+   inv[i]=nil
+   break
+  else
+   addfloat("foiled!",mb.x*8-5,mb.y*8,7)
+  end
+ end
 end
 
 function checkend()
