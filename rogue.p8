@@ -41,8 +41,8 @@ end
 function _update60()
  t+=1
  _upd()
- dofloats()
  dohpwind()
+ dofloats()
 end
 
 function _draw()
@@ -51,6 +51,9 @@ function _draw()
  if floor>-1 then
   drawind()
   drawlogo() 
+ for f in all(float) do
+  oprint8(f.txt,f.x,f.y,f.c,0)
+ end
  end
  --fadeperc=0
  checkfade()
@@ -93,12 +96,12 @@ function startgame()
  talkwind = nil
  hpwind=addwind(5,5,38,13,{})
  thrdx,thrdy=0,-1
- takeitem(12)
- takeitem(13)
- takeitem(14)
- takeitem(15)
- takeitem(16)
- takeitem(17)
+ --takeitem(12)
+ --takeitem(13)
+ --takeitem(14)
+ --takeitem(15)
+ --takeitem(16)
+ --takeitem(17)
  _upd=update_game
  _drw=draw_game
  st_steps,st_kills,st_meals,st_killer=0,0,0,""
@@ -309,9 +312,9 @@ function draw_game()
  end
  
 
- for f in all(float) do
-  oprint8(f.txt,f.x,f.y,f.c,0)
- end
+ --for f in all(float) do
+  --oprint8(f.txt,f.x,f.y,f.c,0)
+ --end
  --debug
  if debugmap!=nil then
   for x=0,15 do
@@ -677,6 +680,9 @@ function hitmob(atkm,defm,rawdmg)
   dmg*=2
  elseif defm.bless>0 then
   dmg=flr(dmg/2)
+ elseif defm.spec=="divide" and defm.charge>0 then
+  divide(defm)
+  defm.charge-=1
  end
  defm.bless=0
  local def=defm.defmin+flr(rnd(defm.defmax-defm.defmin+1))
@@ -746,17 +752,26 @@ function blessmob(mb,val)
  sfx(62)
 end
 
-function rob(mb,target)
+function rob(mb)
  for i= 1,6 do
   local itm=inv[i]
   if itm_type[itm]=="fud" then
-   addfloat("stole!",mb.x*8-30,mb.y*8,5)
+   addfloat(itm_name[itm].." stolen!",32,mb.y*8+10,7)
    eat(itm,mb)
    inv[i]=nil
    break
   else
-   addfloat("foiled!",mb.x*8-5,mb.y*8,7)
+   print("")
   end
+ end
+end
+
+function divide(mb)
+ local r=flr(rnd(3))
+ local xoffset=getrnd(dirx)
+ local yoffset=getrnd(diry)
+ if r==2 then
+  addmob(2,mb.x+xoffset,mb.y+yoffset)
  end
 end
 
@@ -1270,8 +1285,9 @@ function ai_attac(m)
    hitmob(m,p_mob)
    blessmob(p_mob,-1)
    m.charge-=1
-  elseif m.spec=="steal" then
-   rob(m,target)
+  elseif m.spec=="steal" and m.charge>0 then
+   rob(m)
+   m.charge-=1
   else
    hitmob(m,p_mob)
   end
@@ -1455,7 +1471,7 @@ function genfloor(f)
  mob={}
  if floor>-1 then
   add(mob,p_mob)
-  addmob(5,7,7)
+  --addmob(5,7,7)
  end
  fog=blankmap(0)
  if floor==1 then
