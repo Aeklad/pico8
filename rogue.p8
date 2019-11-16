@@ -18,7 +18,7 @@ function _init()
  mob_name=explode("player,slime    ,giant bat,skeleton ,goblin   ,hydra    ,troll    ,cyclops   ,zorn     ")
  mob_ani=explodeval("240,192,196,200,204,208,212,216,220")
  mob_col=explodeval("7,5,5,6,11,13,12,15,15")
- mob_hp=explodeval("5,1,2,3,3,4,5,14,8")
+ mob_hp=explodeval("5,1,1,3,3,4,5,14,8")
  mob_los=explodeval("4,4,4,4,4,4,4,4,4")
  mob_atk=explodeval("1,1,2,1,2,3,3,5,5")
  mob_minf=explodeval("1,1,2,3,4,5,6,7,8")
@@ -656,7 +656,7 @@ function iswalkable(x,y,mode)
  if inbounds(x,y) then
   local tle=mget(x,y)
   if mode=="sight" then
-   return not fget(tle,2)
+   return not fget(tle,2) --fget(tle,3) flyable tile
   else
    if not fget(tle,0) then
     if mode=="checkmobs" then
@@ -665,6 +665,16 @@ function iswalkable(x,y,mode)
     return true
    end
   end
+ end
+ return false
+end
+
+function isflyable(x,y)
+ if inbounds(x,y) then
+  local tle=mget(x,y)
+   if fget(tle,3) then
+    return true
+   end
  end
  return false
 end
@@ -716,7 +726,6 @@ function hitmob(atkm,defm,rawdmg)
  end
 end
 
-
 function healmob(mb,hp)
 	hp=min(mb.hpmax-mb.hp,hp)
  mb.hp+=hp
@@ -767,10 +776,10 @@ function rob(mb)
 end
 
 function divide(mb)
- local r=flr(rnd(3))
+ local r=flr(rnd(7))
  local xoffset=getrnd(dirx)
  local yoffset=getrnd(diry)
- if r==2 then
+ if r==3 then
   addmob(2,mb.x+xoffset,mb.y+yoffset)
  end
 end
@@ -949,7 +958,6 @@ function throwtile()
  until not iswalkable(tx,ty,"checkmobs")
  return tx,ty
 end
-
 
 -->8
 --ui tab 5
@@ -1312,7 +1320,7 @@ function ai_attac(m)
    for i=1,4 do
     local dx,dy=dirx[i],diry[i]
     local tx,ty=m.x+dx,m.y+dy
-    if iswalkable(tx,ty,"checkmobs") then
+    if m.spec=="fly" and isflyable(tx,ty,"checkmobs") or iswalkable(tx,ty,"checkmobs") then
      local dst=distmap[tx][ty]
      if dst<bdst then
       cand={}
@@ -1336,6 +1344,7 @@ end
 function cansee(m1,m2)
  return dist(m1.x,m1.y,m2.x,m2.y)<=m1.los and los(m1.x,m1.y,m2.x,m2.y)
 end
+
 function spawnmobs()
  mobpool={}
  for i=2,#mob_name do
@@ -1459,7 +1468,6 @@ function foodnames()
   end
  end
 end
-
 
 -->8
 --gen
@@ -2272,7 +2280,7 @@ __label__
 88888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888
 
 __gff__
-0000050500000303030103010307020005050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505000000000000000004040000000000000000000000000000000000000000000000000000000000000000000000000000030000000000000000000000000000000000
+0000050500000b0b0b090b090b07020005050505050505050505050505050505050505050505050505050505050505050505050505050505050505050505000000000000000004040404000000000000000000000000000000000000000000000000000000000000000000000000030000000000000000000000000000000000
 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 __map__
 0202020202020202020202010202020203030303030303030303030303030303000000000000000000000000000000000202020202020202020202020202020210111111111111111111111111111112000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
