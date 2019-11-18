@@ -18,7 +18,7 @@ function _init()
  mob_name=explode("player,slime    ,giant bat,skeleton ,goblin   ,hydra    ,troll    ,cyclops   ,zorn     ")
  mob_ani=explodeval("240,192,196,200,204,208,212,216,220")
  mob_col=explodeval("7,5,5,6,11,13,12,15,15")
- mob_hp=explodeval("5,1,1,3,3,4,5,14,8")
+ mob_hp=explodeval("5,1,1,1,3,4,5,14,8")
  mob_los=explodeval("4,4,4,4,4,4,4,4,4")
  mob_atk=explodeval("1,1,2,1,2,3,3,5,5")
  mob_minf=explodeval("1,1,2,3,4,5,6,7,8")
@@ -183,11 +183,15 @@ function move_mnu(wnd)
 end
 
 function update_pturn()
+ for m in all(mob) do
+  if m.spec=="fast" then
+   m.charge=1
+  end
+ end
  if p_mob.freeze then 
   st_killer="cold drink"
   p_mob.hp=0
  end
-
  dobuttbuff() 
  p_t=min(p_t+.125,1)
  if p_mob.mov then
@@ -205,14 +209,19 @@ function update_pturn()
 end
 
 function update_aiturn()
-
  dobuttbuff() 
  p_t=min(p_t+.125,1)
  for m in all(mob) do
   if m!=p_mob and m.mov then  
    m:mov()
   end
+  if m.spec=="fast" then
+   if p_t==1 and m.charge<2 then
+    m.charge+=1
+    doai()
+   end
  end
+end
 
  if p_t==1 then
   _upd=update_game
@@ -1479,7 +1488,7 @@ function genfloor(f)
  mob={}
  if floor>-1 then
   add(mob,p_mob)
-  --addmob(5,7,7)
+  addmob(4,7,7)
  end
  fog=blankmap(0)
  if floor==1 then
