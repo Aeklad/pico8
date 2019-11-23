@@ -183,6 +183,7 @@ function move_mnu(wnd)
 end
 
 function update_pturn()
+ p_mob.turns=1--THIS IS Something!
  for m in all(mob) do
   if m.spec=="fast" then
    m.charge=1
@@ -215,17 +216,14 @@ function update_aiturn()
   if m!=p_mob and m.mov then  
    m:mov()
   end
-  if m.spec=="fast" then
-   if p_t==1 and m.charge<2 then
-    m.charge+=1
-    doai()
-   end
  end
-end
-
  if p_t==1 then
   _upd=update_game
   if checkend()then
+   if p_mob.turns==1 then
+    doai()
+    p_mob.turns -=1
+   end
    if p_mob.stun then
     p_mob.stun=false
     doai()
@@ -1190,6 +1188,7 @@ function addmob(typ,mx,my)
   flash=0,
   col=mob_col[typ],
   freeze=false,
+  turns = 1,
   stun=false,
   stimer=0,
   charge=1,
@@ -1319,7 +1318,7 @@ function ai_attac(m)
    --de aggro
    m.task=ai_wait
    addfloat("?",m.x*8+2,m.y*8,10)
-   m.lastmoved=false
+   --m.lastmoved=false
   else
    if m.spec=="slow" and m.lastmoved then
     return false
