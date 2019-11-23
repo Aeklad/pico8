@@ -18,12 +18,12 @@ function _init()
  mob_name=explode("player,slime    ,giant bat,skeleton ,goblin   ,hydra    ,troll    ,cyclops   ,zorn     ")
  mob_ani=explodeval("240,192,196,200,204,208,212,216,220")
  mob_col=explodeval("7,5,5,6,11,13,12,15,15")
- mob_hp=explodeval("5,1,1,1,3,4,5,14,8")
+ mob_hp=explodeval("99,1,1,1,3,4,5,14,8")
  mob_los=explodeval("4,4,4,4,4,4,4,4,4")
  mob_atk=explodeval("1,1,2,1,2,3,3,5,5")
  mob_minf=explodeval("1,1,2,3,4,5,6,7,8")
  mob_maxf=explodeval("2,3,4,5,6,7,8,8,8")
- mob_spec=explode("player,divide,fly,fast,steal,stun,curse,slow,spawn")
+ mob_spec=explode("player,divide,slow,fast,steal,stun,curse,slow,spawn")
  mob_loot=explodeval("0,0,0,0,0,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15")
  crv_sig=explodeval("255,214,124,179,233")
  crv_msk=explodeval("0,9,3,12,6")
@@ -105,7 +105,7 @@ function startgame()
  _upd=update_game
  _drw=draw_game
  st_steps,st_kills,st_meals,st_killer=0,0,0,""
- genfloor(0)
+ genfloor(3)
 end
 -->8
 --updates tab 1
@@ -184,11 +184,6 @@ end
 
 function update_pturn()
  p_mob.turns=1--THIS IS Something!
- for m in all(mob) do
-  if m.spec=="fast" then
-   m.charge=1
-  end
- end
  if p_mob.freeze then 
   st_killer="cold drink"
   p_mob.hp=0
@@ -200,6 +195,10 @@ function update_pturn()
  end
 
  if p_t==1 then
+  if p_mob.movecount >1 then
+   p_mob.movecount =0
+  end
+  p_mob.movecount +=1
   _upd=update_game
   if trig_step() then return end
   if checkend() and not skipai then
@@ -1193,6 +1192,7 @@ function addmob(typ,mx,my)
   stimer=0,
   charge=1,
   lastmoved=false,
+  movecount=0,
   bless=0,
   spec=mob_spec[typ],
   hp=mob_hp[typ],
@@ -1293,6 +1293,9 @@ function ai_attac(m)
  if dist(m.x,m.y,p_mob.x,p_mob.y)==1 then
   --p_ttack player
   dx,dy=p_mob.x-m.x,p_mob.y-m.y
+   if m.spec!="fast" and m.lastmoved then
+    return false
+   end
   mobbump(m,dx,dy)
   if m.spec=="stun" and m.charge>0 then
    stunmob(p_mob)
@@ -1320,7 +1323,13 @@ function ai_attac(m)
    addfloat("?",m.x*8+2,m.y*8,10)
    --m.lastmoved=false
   else
-   if m.spec=="slow" and m.lastmoved then
+   if m.movecount>1 then
+    m.movecount=0
+   end
+   if m.spec=="slow" and p_mob.movecount <2 then
+    return false
+   end
+   if m.spec!="fast" and m.lastmoved then
     return false
    end
    local bdst,cand=999,{}
@@ -1342,6 +1351,9 @@ function ai_attac(m)
    if #cand>0 then
     local c=getrnd(cand)
     mobwalk(m,dirx[c],diry[c])
+    if m.movecount >2 then
+     m.movecount=0
+    end
     return true
    end
   end
