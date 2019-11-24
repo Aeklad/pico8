@@ -18,12 +18,12 @@ function _init()
  mob_name=explode("player,slime    ,giant bat,skeleton ,goblin   ,hydra    ,troll    ,cyclops   ,zorn     ")
  mob_ani=explodeval("240,192,196,200,204,208,212,216,220")
  mob_col=explodeval("7,5,5,6,11,13,12,15,15")
- mob_hp=explodeval("99,1,1,1,3,4,5,14,8")
+ mob_hp=explodeval("5,1,2,3,3,4,5,14,8")
  mob_los=explodeval("4,4,4,4,4,4,4,4,4")
  mob_atk=explodeval("1,1,2,1,2,3,3,5,5")
  mob_minf=explodeval("1,1,2,3,4,5,6,7,8")
  mob_maxf=explodeval("2,3,4,5,6,7,8,8,8")
- mob_spec=explode("player,divide,slow,fast,steal,stun,curse,slow,spawn")
+ mob_spec=explode("player,divide,fly,fast,steal,stun,curse,slow,spawn")
  mob_loot=explodeval("0,0,0,0,0,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15")
  crv_sig=explodeval("255,214,124,179,233")
  crv_msk=explodeval("0,9,3,12,6")
@@ -105,7 +105,7 @@ function startgame()
  _upd=update_game
  _drw=draw_game
  st_steps,st_kills,st_meals,st_killer=0,0,0,""
- genfloor(3)
+ genfloor(0)
 end
 -->8
 --updates tab 1
@@ -1499,7 +1499,7 @@ function genfloor(f)
  mob={}
  if floor>-1 then
   add(mob,p_mob)
-  addmob(4,7,7)
+  --addmob(4,7,7)
  end
  fog=blankmap(0)
  if floor==1 then
