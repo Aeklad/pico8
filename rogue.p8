@@ -18,12 +18,12 @@ function _init()
  mob_name=explode("player,slime    ,giant bat,skeleton ,goblin   ,hydra    ,troll    ,cyclops   ,zorn     ")
  mob_ani=explodeval("240,192,196,200,204,208,212,216,220")
  mob_col=explodeval("7,5,5,6,11,13,12,15,15")
- mob_hp=explodeval("5,1,2,3,3,4,5,14,8")
+ mob_hp=explodeval("5,1,2,3,3,4,5,14,3")
  mob_los=explodeval("4,4,4,4,4,4,4,4,4")
  mob_atk=explodeval("1,1,2,1,2,3,3,5,5")
  mob_minf=explodeval("1,1,2,3,4,5,6,7,8")
  mob_maxf=explodeval("2,3,4,5,6,7,8,8,8")
- mob_spec=explode("player,divide,fly,fast,steal,stun,curse,slow,spawn")
+ mob_spec=explode("player,divide,fly,fast,steal,stun,curse,slow,magic")
  mob_loot=explodeval("0,0,0,0,0,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15")
  crv_sig=explodeval("255,214,124,179,233")
  crv_msk=explodeval("0,9,3,12,6")
@@ -96,7 +96,7 @@ function startgame()
  talkwind = nil
  hpwind=addwind(5,5,38,13,{})
  thrdx,thrdy=0,-1
- --takeitem(12)
+-- takeitem(12)
  --takeitem(13)
  --takeitem(14)
  --takeitem(15)
@@ -790,6 +790,23 @@ function divide(mb)
  end
 end
 
+function magic(m)
+ local spells={"stun","rob","hit","curse"}
+ local spell=getrnd(spells)
+ if spell=="stun" then
+  stunmob(p_mob)
+ elseif spell=="rob" then
+  rob(m)
+ elseif spell=="hit" then
+  hitmob(m,p_mob)
+ elseif spell=="curse" then
+  blessmob(p_mob,-1) 
+ else
+  return nil
+ end
+ addfloat("magic!",m.x*8-3,m.y*8,7)
+end
+
 function checkend()
  if win then
   music(32)
@@ -1189,6 +1206,7 @@ function addmob(typ,mx,my)
   freeze=false,
   turns = 1,
   stun=false,
+  cast=false,
   stimer=0,
   charge=1,
   lastmoved=false,
@@ -1316,6 +1334,12 @@ function ai_attac(m)
   --move toward player
   if cansee(m,p_mob) then
    m.tx,m.ty=p_mob.x,p_mob.y
+   m.charge+=1
+   if m.spec=="magic" and m.charge%8==(flr(rnd(8))) then
+    magic(m)
+    debug[1]=m.charge
+    return false
+   end
   end
   if m.x==m.tx and m.y==m.ty then
    --de aggro
@@ -1326,7 +1350,7 @@ function ai_attac(m)
    if m.movecount>1 then
     m.movecount=0
    end
-   if m.spec=="slow" and p_mob.movecount <2 then
+   if (m.spec=="slow" or m.spec=="magic") and p_mob.movecount <2 then
     return false
    end
    if m.spec!="fast" and m.lastmoved then
@@ -1410,6 +1434,8 @@ function infestroom(r)
   end
  return target
 end
+
+
 
 -------------------------------------------------------
 -- items
@@ -1499,7 +1525,7 @@ function genfloor(f)
  mob={}
  if floor>-1 then
   add(mob,p_mob)
-  --addmob(4,7,7)
+  --addmob(9,7,7)
  end
  fog=blankmap(0)
  if floor==1 then
