@@ -25,6 +25,7 @@ function _init()
  mob_maxf=explodeval("2,3,4,5,6,7,8,8,8")
  mob_spec=explode("player,divide,fly,fast,steal,stun,curse,slow,magic")
  mob_loot=explodeval("0,0,0,0,0,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15")
+ mob_tagline=explode("player,slimes: sometimes they divide,bats: they like to fly,skeletons: are they so fast?,goblins: tricky little thieves,hydras: three heads-stunning,trolls: curses all around,cyclops: these guys are slow,zorns: they magical!")
  crv_sig=explodeval("255,214,124,179,233")
  crv_msk=explodeval("0,9,3,12,6")
  free_sig=explodeval("0,0,0,0,16,64,32,128,161,104,84,146")
@@ -33,7 +34,7 @@ function _init()
  wall_sig=explodeval("251,233,253,84,146,80,16,144,112,208,241,248,210,177,225,120,179,0,124,104,161,64,240,128,224,176,242,244,116,232,178,212,247,214,254,192,48,96,32,160,245,250,243,249,246,252")
  
  wall_msk=explodeval("0,6,0,11,13,11,15,13,3,9,0,0,9,12,6,3,12,15,3,7,14,15,0,15,6,12,0,0,3,6,12,9,0,9,0,15,15,7,15,14,0,0,0,0,0,0")
-
+ attract=true
  debug={}
  startgame()
 end
@@ -48,12 +49,13 @@ end
 function _draw()
  doshake()
  _drw()
+  
  if floor>-1 then
   drawind()
   drawlogo() 
- for f in all(float) do
-  oprint8(f.txt,f.x,f.y,f.c,0)
- end
+  for f in all(float) do
+   oprint8(f.txt,f.x,f.y,f.c,0)
+  end
  end
  --fadeperc=0
  checkfade()
@@ -67,7 +69,6 @@ end
 function startgame()
  poke(0x3101,194)--start loop
  music(0)
- 
  tani=0
  fadeperc=1
  buttbuff=-1
@@ -79,14 +80,7 @@ function startgame()
  mob={}
  dmob={}
  p_mob=addmob(1,1,1)
- slime=addmob(2,1,1)
- bat=addmob(3,1,3)
- skele=addmob(4,1,5)
- goblin=addmob(5,1,7)
- hydra=addmob(6,8,1)
- troll=addmob(7,8,3)
- cyclops=addmob(8,8,5)
- zorn=addmob(9,8,7)
+ mob_typ=1
  p_t=0
  inv,eqp={},{}
  makeipool()
@@ -105,7 +99,11 @@ function startgame()
  _upd=update_game
  _drw=draw_game
  st_steps,st_kills,st_meals,st_killer=0,0,0,""
- genfloor(0)
+ if attract then
+  genfloor(-1)
+ else
+  genfloor(0)
+ end
 end
 -->8
 --updates tab 1
@@ -153,7 +151,6 @@ function update_inv()
  end
 end
  
-
 function update_throw()
  local b=getbutt()
   if b>=0 and b<=3 then
@@ -233,6 +230,7 @@ end
 
 function update_gover()
  if btn(❎) then
+  attract=false
   sfx(54)
   fadeout()
   startgame()
@@ -316,20 +314,8 @@ function draw_game()
    end
   end
  end
- 
-
- --for f in all(float) do
-  --oprint8(f.txt,f.x,f.y,f.c,0)
- --end
- --debug
- if debugmap!=nil then
-  for x=0,15 do
-   for y=0,15 do
-    if debugmap[x][y]>0 then
-     spr(63,x*8,y*8)
-    end
-   end
-  end
+ if floor==-1 then
+  draw_attract()
  end
 end
 
@@ -341,7 +327,7 @@ function drawlogo()
   end
   palt(12,true)
   palt(0,false)
-  spr(144,7,logo_y,14,3)
+  --spr(144,7,logo_y,14,3)
   palt()
   oprint8("find the sphere of world saving",0,logo_y+24,7,0)
  end
@@ -383,16 +369,26 @@ function draw_gover()
  print("press x",46,90,5+abs(sin(time()/3)*2))
 end
 
-function draw_title()
-  copymap(64,0)
- add(mob,slime)
- add(mob,bat)
- add(mob,skele)
- add(mob,goblin)
- add(mob,hydra)
- add(mob,troll)
- add(mob,cyclops)
- add(mob,zorn)
+function draw_attract()
+ _upd=update_gover
+ copymap(0,64)
+ palt(12,true)
+ palt(0,false)
+ spr(144,7,8,14,3)
+ palt()
+ if t%240== 0 or attract then
+  attract=false
+  mob_typ+=1
+  if mob_typ > 9 then 
+   mob_typ=2
+  end
+  mob={}
+  add(mob,addmob(mob_typ,7,9))
+ end
+ print("in the depths danger lurks",8,32,7,0)
+ if mob_typ >=2 then
+  print(mob_tagline[mob_typ],0,88,7,0)
+ end
 end
 
 function animap()
@@ -1534,7 +1530,7 @@ function genfloor(f)
   st_steps=0
  end
  if floor==-1 then
-  draw_title()
+  attract=true
  elseif floor==0 then
   copymap(16,0)
  elseif floor==winfloor then
