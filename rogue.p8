@@ -3,6 +3,16 @@ version 18
 __lua__
 --help!!
 function _init()
+ debug={}
+
+ day = stat(92)
+ month= stat(91)
+ year= stat(90)
+
+ debug[1]=day.."-"..month.."-"..year.."-"
+ daily=day*0.1+month*3.1+(year-2019)*37.2
+ debug[2]=daily
+ srand(daily)
  t=0
  shake=0
  dpal=explodeval("0,1,1,2,1,13,6,4,4,9,3,13,1,13,14")
@@ -35,7 +45,6 @@ function _init()
  
  wall_msk=explodeval("0,6,0,11,13,11,15,13,3,9,0,0,9,12,6,3,12,15,3,7,14,15,0,15,6,12,0,0,3,6,12,9,0,9,0,15,15,7,15,14,0,0,0,0,0,0")
  attract=true
- debug={}
  startgame()
 end
 
@@ -99,11 +108,12 @@ function startgame()
  _upd=update_game
  _drw=draw_game
  st_steps,st_kills,st_meals,st_killer=0,0,0,""
- if attract then
-  genfloor(-1)
- else
-  genfloor(0)
- end
+ --if attract then
+  --genfloor(-1)
+ --else
+  --genfloor(0)
+ --end
+ genfloor(1)
 end
 -->8
 --updates tab 1
@@ -1551,7 +1561,6 @@ function genfloor(f)
 end
 
 function mapgen()
-
  repeat
   copymap(48,0)
   rooms={}
