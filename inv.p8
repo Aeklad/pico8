@@ -48,6 +48,7 @@ function _init()
  gravity = 0.3
  friction=0.85
  t=0
+ score = 0
 
 end
 
@@ -110,15 +111,13 @@ function player_update()
   inv.jumping=true
  end
 
+ inv.x%=(136)
+
  inv.x+=inv.dx
  inv.y+=inv.dy
+ 
+ 
 
- if inv.x > 128 then
-  inv.x=(inv.w)*-1
- end
- if inv.x < 0 then
-  inv.x=128-(inv.w*8)
- end
 
 end
 
@@ -189,10 +188,11 @@ end
 
 function draw_map()
  rectfill(0,110,128,111,11)
- print("<0000>     <0000>     <0000>",hcenter("<0000>     <0000>     <0000>"),5,6)
- spr(64,16,64,6,4)
- spr(64,94,64,6,4)
- spr(38,16,112,3,2)
+ print("<score> "..score,hcenter("<score> "..score),5,6)
+ print(inv.x,20,20)
+ spr(64,16,48,6,4)
+ spr(64,94,48,6,4)
+ spr(38,16,112,4,2)
 end
 
 function _update()
@@ -208,7 +208,7 @@ function _draw()
  cls(1)
 -- print(inv.x)
  draw_map()
- spr(inv.s,inv.x,inv.y,inv.w,inv.h)
+ spr(inv.s,inv.x-8,inv.y,inv.w,inv.h)
  spr(enemy.s,enemy.x,enemy.y,enemy.w,enemy.h,enemy.flp)
 
 end
