@@ -2,16 +2,13 @@ pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
 
-
-
-
 function _init()
  
  inv= {
-  s=0,
+  s=6,
   x=16,
-  y=64,
-  w=3,
+  y=110,
+  w=2,
   h=2,
   flp=false,
   dx=0,
@@ -30,7 +27,7 @@ function _init()
  enemy= {
   s=10,
   x=90,
-  y=80,
+  y=102,
   w=1,
   h=1,
   flp=false,
@@ -38,7 +35,7 @@ function _init()
   dy=0,
   max_dx=2,
   max_dy=3,
-  acc=0.5,
+  acc=0.1,
   boost=5,
   anim=0,
   running=false,
@@ -46,13 +43,18 @@ function _init()
   falling=false,
   sliding=false,
   landing=false,
-  l=true,
-  r=false
+  state=0 
  }
  gravity = 0.3
  friction=0.85
  t=0
 
+end
+
+function hcenter(s)
+ --screen center minus the string length
+ --times half a characters width in pixels
+ return 64-#s*2
 end
 
 function collide_map(obj,aim,flag)
@@ -96,11 +98,11 @@ function player_update()
   inv.landed=false
   inv.jumping=false
   
-  if inv.y >= 64 then
+  if inv.y >= 94 then
    inv.landed=true
    inv.falling=false
    inv.dy=0
-   inv.y=64
+   inv.y=94
   end
  
  elseif inv.dy < 0 then
@@ -111,6 +113,13 @@ function player_update()
  inv.x+=inv.dx
  inv.y+=inv.dy
 
+ if inv.x > 128 then
+  inv.x=(inv.w)*-1
+ end
+ if inv.x < 0 then
+  inv.x=128-(inv.w*8)
+ end
+
 end
 
 function player_animate()
@@ -119,9 +128,9 @@ function player_animate()
 
   if time()-inv.anim > .5 then
    inv.anim=time()
-   inv.s+=3
-   if inv.s>3 then
-    inv.s=0
+   inv.s+=2
+   if inv.s>8 then
+    inv.s=6
    end
   end
 
@@ -131,29 +140,33 @@ end
 
 function enemy_update()
 
- if enemy.x>120 then
-  enemy.r=false
-  enemy.l=true
- elseif enemy.x<5  then
-  enemy.l=false
-  enemy.r=true
+ enemy.dx*=friction
+
+ if t%39==0 then
+  enemy.state=flr(rnd(3))
  end
  
- 
- if btn(0) then
+ if enemy.x>115 then
+  enemy.state=1
+ elseif enemy.x<5 then
+  enemy.state=2
+ end
+
+ if enemy.state==1 then
   enemy.dx-=enemy.acc
   enemy.running=true
   enemy.flp=true
  end
 
- if btn(1) then
+ if enemy.state==2 then
   enemy.dx+=enemy.acc
   enemy.running=true
   enemy.flp=false
  end
 
- if not enemy.r and not enemy.l then
-  enemy.dx=0
+ if enemy.running and enemy.state==0 and not enemy.falling and not enemy.jumping then
+  enemy.running=false
+  enemy.sliding=true
  end
  enemy.x += enemy.dx
 
@@ -163,7 +176,7 @@ function enemy_animate()
 
  if enemy.running then
 
-  if time()-inv.anim > .1 then
+  if time()-enemy.anim > .1 then
    enemy.anim=time()
    enemy.s+=1
 
@@ -174,9 +187,12 @@ function enemy_animate()
  end
 end
 
-
 function draw_map()
- rectfill(0,80,128,82,11)
+ rectfill(0,110,128,111,11)
+ print("<0000>     <0000>     <0000>",hcenter("<0000>     <0000>     <0000>"),5,6)
+ spr(64,16,64,6,4)
+ spr(64,94,64,6,4)
+ spr(38,16,112,3,2)
 end
 
 function _update()
@@ -189,8 +205,8 @@ end
 
 function _draw()
  
- cls()
- print(inv.boost)
+ cls(1)
+-- print(inv.x)
  draw_map()
  spr(inv.s,inv.x,inv.y,inv.w,inv.h)
  spr(enemy.s,enemy.x,enemy.y,enemy.w,enemy.h,enemy.flp)
