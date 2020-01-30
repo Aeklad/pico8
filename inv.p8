@@ -24,9 +24,29 @@ function _init()
   sliding=false,
   landing=false
  }
- enemy= {
+ gravity = 0.3
+ friction=0.85
+ t=0
+ score = 0
+ enemycount = 0
+ maxenemycount = 0
+ bullets={}
+ enemies={}
+ createEnemy(1)
+
+end
+
+function collide(b)
+ local invx = inv.x-8
+ local invy = inv.y-8
+ local invw = inv.x+8
+ local invh = inv.y+8
+ return invw > b.x and invx < b.x and invh > b.y and invy < b.y
+end
+function createEnemy(n)
+ local b = {
   s=10,
-  x=90,
+  x=16+flr(rnd(80)),
   y=102,
   w=1,
   h=1,
@@ -45,48 +65,31 @@ function _init()
   landing=false,
   state=0 
  }
- gravity = 0.3
- friction=0.85
- t=0
- score = 0
- bullets={}
-
-end
-
-function collide(b)
- local invx = inv.x
- local invy = inv.y
- local invw = inv.x+16
- local invh = inv.y+16
- return invw > b.x and invx < b.x+b.w and invh > b.y and invy < b.y+b.h
+ for i=1,n do
+  add(enemies,b)
+  enemycount+=1
+ end
 end
 
 function fire()
- local b = {
-  sp=14,
-  x=enemy.x+4,
-  y=enemy.y+4,
-  w=2,
-  h=2,
-  dx=0,
-  dy=-3,
- }
- add(bullets,b)
+ for enemy in all(enemies) do
+  local b = {
+   sp=14,
+   x=enemy.x+4,
+   y=enemy.y+4,
+   w=2,
+   h=2,
+   dx=0,
+   dy=-3,
+  }
+  add(bullets,b)
+ end
 end
 
 function hcenter(s)
  --screen center minus the string length
  --times half a characters width in pixels
  return 64-#s*2
-end
-
-function collide_map(obj,aim,flag)
-
- local x=obj.x local y=obj.y
- local w=obj.w local h=obj.h
- local x1=0 local y1 =0
- local x2=0 local y2=0
-
 end
 
 function player_update()
@@ -137,9 +140,6 @@ function player_update()
 
  inv.x+=inv.dx
  inv.y+=inv.dy
- 
- 
-
 
 end
 
@@ -160,51 +160,66 @@ function player_animate()
 end
 
 function enemy_update()
+ maxenemycount=enemycount/5
+ for enemy in all(enemies) do
 
- enemy.dx*=friction
+  enemy.dx*=friction
 
- if t%39==0 then
-  enemy.state=flr(rnd(3))
-  fire() 
+  if t%39==0 then
+   enemy.state=flr(rnd(3))
+   --fire() 
+  end
+  
+  if enemy.x>115 then
+   enemy.state=1
+  elseif enemy.x<5 then
+   enemy.state=2
+  end
+
+  if enemy.state==1 then
+   enemy.dx-=enemy.acc
+   enemy.running=true
+   enemy.flp=true
+  end
+
+  if enemy.state==2 then
+   enemy.dx+=enemy.acc
+   enemy.running=true
+   enemy.flp=false
+  end
+
+  if enemy.running and enemy.state==0 and not enemy.falling and not enemy.jumping then
+   enemy.running=false
+   enemy.sliding=true
+  end
+  enemy.x += enemy.dx
+  
+  if collide(enemy) then
+   del(enemies,enemy)
+   enemycount-=1
+   if enemycount <score*10 then
+    createEnemy(2)
+   else
+    createEnemy(1)
+   end
+   score+=1
+  end
+
  end
- 
- if enemy.x>115 then
-  enemy.state=1
- elseif enemy.x<5 then
-  enemy.state=2
- end
-
- if enemy.state==1 then
-  enemy.dx-=enemy.acc
-  enemy.running=true
-  enemy.flp=true
- end
-
- if enemy.state==2 then
-  enemy.dx+=enemy.acc
-  enemy.running=true
-  enemy.flp=false
- end
-
- if enemy.running and enemy.state==0 and not enemy.falling and not enemy.jumping then
-  enemy.running=false
-  enemy.sliding=true
- end
- enemy.x += enemy.dx
-
-
 end
 
 function enemy_animate()
+ for enemy in all(enemies) do
 
- if enemy.running then
+  if enemy.running then
 
-  if time()-enemy.anim > .1 then
-   enemy.anim=time()
-   enemy.s+=1
+   if time()-enemy.anim > .1 then
+    enemy.anim=time()
+    enemy.s+=1
 
-   if enemy.s>13 then
-    enemy.s=10
+    if enemy.s>13 then
+     enemy.s=10
+    end
    end
   end
  end
@@ -229,7 +244,9 @@ function _update()
   b.y+=b.dy
   if collide(b) then 
    del(bullets,b)
-   score +=1
+  end
+  if b.y <5 then
+   del(bullets.b)
   end
  end
 end
@@ -237,10 +254,13 @@ end
 function _draw()
  
  cls(1)
--- print(inv.x)
+ print(score*.10)
+ print(enemycount,0,20)
  draw_map()
  spr(inv.s,inv.x-8,inv.y,inv.w,inv.h)
- spr(enemy.s,enemy.x,enemy.y,enemy.w,enemy.h,enemy.flp)
+ for enemy in all(enemies) do
+  spr(enemy.s,enemy.x,enemy.y,enemy.w,enemy.h,enemy.flp)
+ end
  for b in all(bullets) do
   pset(b.x,b.y,7)
  end
