@@ -63,7 +63,8 @@ function createEnemy(n)
   falling=false,
   sliding=false,
   landing=false,
-  state=0 
+  state=0 ,
+  timer=0
  }
  for i=1,n do
   add(enemies,b)
@@ -82,7 +83,9 @@ function fire()
    dx=0,
    dy=-3,
   }
-  add(bullets,b)
+  if #bullets<10 then
+   add(bullets,b)
+  end
  end
 end
 
@@ -160,14 +163,13 @@ function player_animate()
 end
 
 function enemy_update()
- maxenemycount=enemycount/5
  for enemy in all(enemies) do
 
   enemy.dx*=friction
+  enemy.timer+=1
 
   if t%39==0 then
    enemy.state=flr(rnd(3))
-   --fire() 
   end
   
   if enemy.x>115 then
@@ -197,12 +199,15 @@ function enemy_update()
   if collide(enemy) then
    del(enemies,enemy)
    enemycount-=1
-   if enemycount <score*10 then
+   if enemycount <score*.20 and enemycount < 10 then
     createEnemy(2)
    else
     createEnemy(1)
    end
    score+=1
+  end
+  if enemy.state==0 then
+   fire()
   end
 
  end
@@ -242,11 +247,8 @@ function _update()
  for b in all(bullets) do
   b.x+=b.dx
   b.y+=b.dy
-  if collide(b) then 
+  if collide(b) or b.y<5 then 
    del(bullets,b)
-  end
-  if b.y <5 then
-   del(bullets.b)
   end
  end
 end
@@ -255,7 +257,7 @@ function _draw()
  
  cls(1)
  print(score*.10)
- print(enemycount,0,20)
+ print(t,0,20)
  draw_map()
  spr(inv.s,inv.x-8,inv.y,inv.w,inv.h)
  for enemy in all(enemies) do
