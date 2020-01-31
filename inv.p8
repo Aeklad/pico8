@@ -1,9 +1,13 @@
 pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
-
+fake_pi = .5
+turnspeed = 5 * (fake_pi/180)
 function _init()
  
+gamestate=0
+:w
+
  inv= {
   s=6,
   x=16,
@@ -22,7 +26,8 @@ function _init()
   jumping=false,
   falling=false,
   sliding=false,
-  landing=false
+  landing=false,
+  health=100
  }
  gravity = 0.3
  friction=0.85
@@ -30,9 +35,11 @@ function _init()
  score = 0
  enemycount = 0
  maxenemycount = 0
+ hitcount = 0
  bullets={}
  enemies={}
  createEnemy(1)
+ motherships={}
 
 end
 
@@ -46,7 +53,7 @@ end
 function createEnemy(n)
  local b = {
   s=10,
-  x=16+flr(rnd(80)),
+  x=flr(rnd(40)+80),
   y=102,
   w=1,
   h=1,
@@ -64,7 +71,7 @@ function createEnemy(n)
   sliding=false,
   landing=false,
   state=0 ,
-  timer=0
+  time=time(),
  }
  for i=1,n do
   add(enemies,b)
@@ -81,14 +88,41 @@ function fire()
    w=2,
    h=2,
    dx=0,
-   dy=-3,
+   dy=0,
+   angle=0
   }
-  if #bullets<10 then
+  if #bullets<5 then
    add(bullets,b)
   end
  end
 end
 
+function createmothership()
+ local b = {
+  x= 0,
+  y= 64,
+  sp= 42,
+  w=4,
+  h=2,
+  dx=0,
+  dy=0
+ }
+ add(motherships,b)
+end
+
+function updatemothership()
+ for mshp in all(motherships) do
+  mshp.x+=1
+  if collide(mshp) then
+   del(motherships,mshp)
+   inv.health+=50
+  end
+  if mshp.x > 128 then
+   del(motherships,mshp)
+  end
+ end
+end
+  
 function hcenter(s)
  --screen center minus the string length
  --times half a characters width in pixels
@@ -164,9 +198,7 @@ end
 
 function enemy_update()
  for enemy in all(enemies) do
-
   enemy.dx*=friction
-  enemy.timer+=1
 
   if t%39==0 then
    enemy.state=flr(rnd(3))
@@ -199,14 +231,14 @@ function enemy_update()
   if collide(enemy) then
    del(enemies,enemy)
    enemycount-=1
-   if enemycount <score*.20 and enemycount < 10 then
+   if enemycount <score*.10 and enemycount < 10 then
     createEnemy(2)
    else
     createEnemy(1)
    end
    score+=1
   end
-  if enemy.state==0 then
+  if enemy.state==flr(rnd(3)) then
    fire()
   end
 
@@ -230,25 +262,76 @@ function enemy_animate()
  end
 end
 
+function draw_intro()
+ cls()
+ print("press z to start",hcenter("press z to start"),64,6)
+end
+
+function draw_gover()
+ cls()
+ print("game over",hcenter("game over"),64,6
+ print("press x to play again",hcenter("press x to play again"),70,6)
+end
+
 function draw_map()
  rectfill(0,110,128,111,11)
  print("<score> "..score,hcenter("<score> "..score),5,6)
+ print ("<health> "..inv.health,hcenter("<health> "),115)
  spr(64,16,48,6,4)
  spr(64,94,48,6,4)
- spr(38,16,112,4,2)
+ spr(38,94,94,4,2)
 end
 
 function _update()
- t=t+1
- player_update()
- player_animate()
- enemy_update()
- enemy_animate()
- for b in all(bullets) do
-  b.x+=b.dx
-  b.y+=b.dy
-  if collide(b) or b.y<5 then 
-   del(bullets,b)
+ if gamestate==0 then
+  if btnp(4) then
+   gamestate=1
+  end
+ end
+ if gamestate==1 then
+  t=t+1
+  player_update()
+  player_animate()
+  enemy_update()
+  enemy_animate()
+  updatemothership()
+  if hitcount >75  then hitcount =0 end
+  if #motherships < 1 and hitcount >74 then
+   createmothership()
+  end
+  for b in all(bullets) do
+   b.dy=b.y-inv.y
+   b.dx=b.x-inv.x
+   diff = atan2(b.dx,b.dy)-b.angle
+
+   if diff > fake_pi then
+    diff -= fake_pi *2
+   elseif diff < -fake_pi then
+    diff += fake_pi *2
+   end
+
+   if diff > turnspeed then
+    b.angle += turnspeed
+   elseif diff < - turnspeed then
+    b.angle -= turnspeed
+   else
+    b.angle=atan2(b.dx,b.dy)
+   end
+   b.x-=cos(b.angle)
+   b.y-=sin(b.angle)
+   if collide(b) then 
+    del(bullets,b)
+    inv.health -=1
+    hitcount +=1
+   end
+   if b.y> 128 or b.y<5 or b.x <0 or b.x >128 then 
+    del(bullets,b)
+   end
+  end
+ end
+ if gamestate==2 then
+  if btnp(5) then
+   _init()
   end
  end
 end
@@ -256,15 +339,22 @@ end
 function _draw()
  
  cls(1)
- print(score*.10)
- print(t,0,20)
- draw_map()
- spr(inv.s,inv.x-8,inv.y,inv.w,inv.h)
- for enemy in all(enemies) do
-  spr(enemy.s,enemy.x,enemy.y,enemy.w,enemy.h,enemy.flp)
- end
- for b in all(bullets) do
-  pset(b.x,b.y,7)
+ if gamestate==0 then
+  draw_intro()
+ elseif gamestate==1 then
+  draw_map()
+  spr(inv.s,inv.x-8,inv.y,inv.w,inv.h)
+  for enemy in all(enemies) do
+   spr(enemy.s,enemy.x,enemy.y,enemy.w,enemy.h,enemy.flp)
+  end
+  for b in all(bullets) do
+   pset(b.x,b.y,7)
+  end
+  for mshp in all(motherships) do
+   spr(mshp.sp,mshp.x,mshp.y,mshp.w,mshp.h)
+  end
+ else
+  draw_gover()
  end
 
 end
