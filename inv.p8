@@ -3,10 +3,10 @@ version 18
 __lua__
 fake_pi = .5
 turnspeed = 5 * (fake_pi/180)
+shake=0
 function _init()
- 
+musicplayed=false 
 gamestate=0
-:w
 
  inv= {
   s=6,
@@ -27,7 +27,7 @@ gamestate=0
   falling=false,
   sliding=false,
   landing=false,
-  health=100
+  health=10
  }
  gravity = 0.3
  friction=0.85
@@ -93,6 +93,7 @@ function fire()
   }
   if #bullets<5 then
    add(bullets,b)
+   sfx(1)
   end
  end
 end
@@ -114,8 +115,9 @@ function updatemothership()
  for mshp in all(motherships) do
   mshp.x+=1
   if collide(mshp) then
+   sfx(3)
    del(motherships,mshp)
-   inv.health+=50
+   inv.health+=10
   end
   if mshp.x > 128 then
    del(motherships,mshp)
@@ -229,7 +231,11 @@ function enemy_update()
   enemy.x += enemy.dx
   
   if collide(enemy) then
+
+   shake=.08
+   sfx(0)
    del(enemies,enemy)
+   inv.health +=1
    enemycount-=1
    if enemycount <score*.10 and enemycount < 10 then
     createEnemy(2)
@@ -269,8 +275,16 @@ end
 
 function draw_gover()
  cls()
- print("game over",hcenter("game over"),64,6
- print("press x to play again",hcenter("press x to play again"),70,6)
+ print("game over",hcenter("game over"),64,6)
+ print("you scored "..score.." points",hcenter("you scored "..score.." points"),80,6)
+ print("press x to play again",hcenter("press x to play again"),90,6)
+end
+
+function doshake()
+ local shakex,shakey=16-rnd(32),16-rnd(32)
+ camera(shakex*shake,shakey*shake)
+ shake*=.95
+ if (shake<0.05) shake=0
 end
 
 function draw_map()
@@ -295,9 +309,9 @@ function _update()
   enemy_update()
   enemy_animate()
   updatemothership()
-  if hitcount >75  then hitcount =0 end
-  if #motherships < 1 and hitcount >74 then
+  if #motherships < 1 and hitcount >30 then
    createmothership()
+   hitcount = 0
   end
   for b in all(bullets) do
    b.dy=b.y-inv.y
@@ -320,6 +334,8 @@ function _update()
    b.x-=cos(b.angle)
    b.y-=sin(b.angle)
    if collide(b) then 
+    sfx(2)
+    shake=.02
     del(bullets,b)
     inv.health -=1
     hitcount +=1
@@ -334,11 +350,19 @@ function _update()
    _init()
   end
  end
+ if inv.health <=0 then
+  if not musicplayed then
+   music(00)
+   musicplayed=true
+  end
+  gamestate=2
+ end
 end
 
 function _draw()
  
- cls(1)
+ cls()
+ doshake()
  if gamestate==0 then
   draw_intro()
  elseif gamestate==1 then
@@ -424,3 +448,12 @@ bbbbbbbbbb0000000000000000000000bbbbbbbbbbbb000000000000000000000000000000000000
 bbbbbbbbbb0000000000000000000000bbbbbbbbbbbb000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 bbbbbbbbbb0000000000000000000000bbbbbbbbbbbb000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 bbbbbbbbbb0000000000000000000000bbbbbbbbbbbb000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+__sfx__
+000100001353013540105600e5600b5600a55002550035500354005530095200c5400d51008510015000150002500000000000000000000000000000000000000000000000000000000000000000000000000000
+000100000251003510035100451006510095101351015500076000360000600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+000100000a50005520075400a5500a550075400751000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+0002000003520075400a5500b5600b5600a560055600454003510035500451006510085400b5300d5200f5100f500000000000000000000000000000000000000000000000000000000000000000000000000000
+00100000120500f0500d0500c05000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+__music__
+07 04424344
+
