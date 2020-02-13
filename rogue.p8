@@ -4,7 +4,8 @@ __lua__
 --help!!
 function _init()
  debug={}
-
+ random=rnd()
+ floorsd={}
  day = stat(92)
  month= stat(91)
  year= stat(90)
@@ -13,6 +14,10 @@ function _init()
  daily=day*0.1+month*3.1+(year-2019)*37.2
  debug[2]=daily
  srand(daily)
+ for i=0, 7 do
+  floorsd[i]=dice()
+ end
+ srand(floorsd[1])
  t=0
  shake=0
  dpal=explodeval("0,1,1,2,1,13,6,4,4,9,3,13,1,13,14")
@@ -108,12 +113,11 @@ function startgame()
  _upd=update_game
  _drw=draw_game
  st_steps,st_kills,st_meals,st_killer=0,0,0,""
- --if attract then
-  --genfloor(-1)
- --else
-  --genfloor(0)
- --end
- genfloor(1)
+ if attract then
+  genfloor(-1)
+ else
+  genfloor(0)
+ end
 end
 -->8
 --updates tab 1
@@ -553,7 +557,7 @@ function toval(_arr)
 end
 
 function doshake()
- local shakex,shakey=16-rnd(32),16-rnd(32)
+ local shakex,shakey=16,16--16-rnd(32),16-rnd(32)
  camera(shakex*shake,shakey*shake)
  shake*=.95
  if (shake<0.05) shake=0
@@ -711,7 +715,7 @@ function hitmob(atkm,defm,rawdmg)
  elseif defm.bless>0 then
   dmg=flr(dmg/2)
  elseif defm.spec=="divide" and defm.charge>0 then
-  divide(defm)
+  --divide(defm)
   defm.charge-=1
  end
  defm.bless=0
@@ -796,7 +800,7 @@ function rob(mb)
 end
 
 function divide(mb)
- local r=flr(rnd(7))
+ local r=flr(rnd()*7+1)
  local xoffset=getrnd(dirx)
  local yoffset=getrnd(diry)
  if r==3 then
@@ -1214,7 +1218,7 @@ function addmob(typ,mx,my)
   oy=0,
   flp=false,
   ani={},
-  frame=(mob_ani[typ])+flr(rnd(4)),
+  frame=(mob_ani[typ])+flr(rnd()*4)+1,
   flash=0,
   col=mob_col[typ],
   freeze=false,
@@ -1351,7 +1355,6 @@ function ai_attac(m)
    m.charge+=1
    if m.spec=="magic" and m.charge%8==(flr(rnd(8))) then
     magic(m)
-    debug[1]=m.charge
     return false
    end
   end
@@ -1554,13 +1557,14 @@ function genfloor(f)
  elseif floor==winfloor then
   copymap(32,0)
  else
-  fog=blankmap(1)
+  fog=blankmap(0)
   mapgen()
   unfog()
  end
 end
 
 function mapgen()
+ srand(floor)
  repeat
   copymap(48,0)
   rooms={}
@@ -1588,6 +1592,10 @@ function snapshot()
  --for i=0,1 do
  -- flip()
  --end
+end
+
+function dice()
+ return flr(rnd(8)+1)
 end
 -------------------
 --rooms
