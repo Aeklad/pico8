@@ -4,17 +4,16 @@ __lua__
 --help!!
 function _init()
  debug={}
- cartdata("rnd_test
+ cartdata("aeklad_dungeon_v1")
+ oldseed=dget(0)
  random=rnd()
  floorsd={}
  challenge =false 
- day = stat(92)
+ day = stat(92)+5
  month= stat(91)
  year= stat(90)
 
- debug[1]=day.."-"..month.."-"..year.."-"
  daily=day*0.1+month*3.1+(year-2019)*37.2
- debug[2]=daily
  srand(daily)
  for i=0, 7 do
   floorsd[i]=dice()
@@ -83,6 +82,7 @@ function _draw()
 end
 
 function startgame()
+ oldseed=dget(0)
  poke(0x3101,194)--start loop
  music(0)
  tani=0
@@ -249,6 +249,7 @@ function update_gover()
   attract=false
   sfx(54)
   fadeout()
+  load("rogue.pi")
   startgame()
  end
  --gameover
@@ -644,7 +645,7 @@ function trig_bump(tle,destx,desty)
   --stone tablet
   if floor==0 then
    sfx(54)
-   showtalk(explode(" these depths hide, a great power..., beware adventurer, danger awaits "))
+   showtalk(explode(" this is a scary, and dark dungeon., you might die. "))
   end
  elseif tle==110 then
   win=true
@@ -662,6 +663,7 @@ function trig_step()
   floormsg()
   return true
  elseif tle==5 then
+  dset(0,daily)
   challenge=true
   fadeout()
   genfloor(floor+1)
@@ -1559,10 +1561,11 @@ function genfloor(f)
  end
  if floor==-1 then
   attract=true
+ fog=blankmap(0)
  elseif floor==0 then
   add(mob,p_mob)
   copymap(16,0)
-  if oldseed==daily then
+  if oldseed>=daily then
     mset(10,5,34)
    end
   unfog()
