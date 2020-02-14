@@ -4,6 +4,7 @@ __lua__
 --help!!
 function _init()
  debug={}
+ cartdata("rnd_test
  random=rnd()
  floorsd={}
  challenge =false 
@@ -1547,7 +1548,7 @@ function genfloor(f)
  makefipool()
  mob={}
  --if floor>-1 then
- -- add(mob,p_mob)
+ add(mob,p_mob)
  --end
  fog=blankmap(1)
  --unfog()
@@ -1561,6 +1562,9 @@ function genfloor(f)
  elseif floor==0 then
   add(mob,p_mob)
   copymap(16,0)
+  if oldseed==daily then
+    mset(10,5,34)
+   end
   unfog()
  elseif floor==winfloor then
   copymap(32,0)
@@ -1573,7 +1577,7 @@ end
 
 function mapgen()
  if challenge then
-  srand(floor)
+  srand(floorsd[floor])
  else
   srand(random)
  end
