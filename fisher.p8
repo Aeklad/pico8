@@ -2,9 +2,24 @@ pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
 
+poke(0x5f2c,3)
+palt(8,true)
+palt(0,false)
+p1 = {
+ cx=0,
+ cy=6,
+ x=0,
+ y=48,
+ cw=64,
+ ch=16
+ }
+ 
 function _update()
+ p1.x%=(64)
+ p1.x-=1
  cls(13)
- map(0,0,0,0,64,64)
+ map(p1.cx,p1.cy,p1.x,p1.y,p1.cw,p1.ch)
+ map(p1.cx,p1.cy,p1.x-64,p1.y,p1.cw,p1.ch)
  end
  
 __gfx__

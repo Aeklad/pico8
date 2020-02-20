@@ -82,6 +82,7 @@ function _draw()
 end
 
 function startgame()
+ srand(rnd(random))
  oldseed=dget(0)
  poke(0x3101,194)--start loop
  music(0)
