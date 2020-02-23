@@ -1,187 +1,101 @@
 pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
+function _init()
 
-poke(0x5f2c,3)
-palt(8,true)
-palt(0,false)
-at=0
-aw=.05
+ poke(0x5f2c,3) --This poke doubles the pixel size: screen space is 64X64: Good for Gameshell games
+ palt(8,true) --Changes the Hot Pink Color 8 to be transparent so I can use black as a solid color
+ palt(0,false) -- Makes the Black Color 0 Opaque
+ at=0 -- store the animation timer
+ aw=0.5 -- amount of time to wait between animation frames
 
-friction=0.85
+ friction=0.85
+ acc=0
+ flp=false
 
-pl = {
- s=2,
- w=2,
- h=2,
- x=24,
- y=32,
- flip=false,
- idle=false,
- walking=false,
- fishing=false,
- catching=false
-}
-
-sh = {
- s=128,
- x=24,
- y=47,
- w=2,
- h=2,
- flip=false
-}
-
-p1 = {
- cx=0,
- cy=6,
- x=0,
- y=48,
- cw=16,
- ch=2,
- dx=0,
- max_dx=3,
- acc=0.5
+ pl = { --player variables
+  s=2,
+  w=2,
+  h=2,
+  x=24,
+  y=32,
+  fishing=false
  }
+
+ sh = { --player shadow..should have just drawn this as part of the sprite
+  s=128,
+  x=24,
+  y=47,
+  w=2,
+  h=2
+ }
+ parallax = {
+  cx={16,0,0,16,0},
+  cy={0,0,4,8,6},
+  x={0,0,0,0,0},
+  y={0,8,32,20,48},
+  cw={16,16,16,16,16},
+  ch={5,4,2,4,4},
+  dx={0,0,0,0,0},
+  max_dx={1,1.5,2,2,3}
+ }
+end
+
+  
+function move()
+ acc=0
+ if btn(1) and not btn(0) then acc =.5 end
+ if btn(0) and not btn(1) then acc=-.5 end
+end
  
-p2 = {
- cx=0,
- cy=4,
- x=0,
- y=32,
- cw=16,
- ch=2,
- dx=0,
- max_dx=2,
- acc=0.5
- }
- 
-p3 = {
- cx=0,
- cy=0,
- x=0,
- y=8,
- cw=16,
- ch=4,
- dx=0,
- max_dx=1.5,
- acc=0.5
- }
 
-p4 = {
- cx=16,
- cy=0,
- x=0,
- y=0,
- cw=16,
- ch=4,
- dx=0,
- max_dx=1,
- acc=0.5
- }
-
-p5 = {
- cx=16,
- cy=8,
- x=0,
- y=20,
- cw=16,
- ch=4,
- dx=0,
- max_dx=2,
- acc=0.5
- }
 function animate(sp,f1,f2)
   sp.s+=sp.w
   if sp.s > f2 then sp.s=f1 end
 end
 function _update()
- if abs(p1.dx) > 1 then
-  pl.walking = true
+ move()
+ if parallax.dx[1] < 0 then
+  flp=true
  else
-  pl.walking = false
+  flp=false
  end
-
-  if time()-at > aw then
-   if pl.walking then
-    aw=.05
-    animate(pl,2,6)
-    animate(sh,128,132)
-   else
-    aw=.2
-    animate(pl,8,10)
-    animate(sh,134,136)
-   end
-   at=time()
+ if time()-at > aw then
+  if acc !=0  then
+   aw=.05
+   animate(pl,2,6)
+   animate(sh,128,132)
+  elseif btn(3) then
+   aw=.2
+   animate(pl,32,36)
+  else
+   aw=.2
+   animate(pl,8,10)
+   animate(sh,134,136)
   end
-
- p1.dx*=friction
- p2.dx*=friction
- p3.dx*=friction
- p4.dx*=friction
- p5.dx*=friction
-
- if btn(3) then 
-  pl.fishing=true
+  at=time()
  end
 
+ for i=1,5 do
 
- if btn(0) and not btn(3) then
-  p1.dx-=p1.acc
-  p2.dx-=p2.acc
-  p3.dx-=p3.acc
-  p4.dx-=p4.acc
-  p5.dx-=p5.acc
-   if not btn(1) then
-   pl.flip=true
-   sh.flip=true
-  end
+  parallax.dx[i]*=friction
+  parallax.dx[i]+=acc
+  parallax.dx[i]=mid(-parallax.max_dx[i],parallax.dx[i],parallax.max_dx[i])
+  parallax.x[i]%=(128)
+  parallax.x[i]-=parallax.dx[i]
+
  end
-
- if btn(1) and not btn(3) then
-  p1.dx+=p1.acc
-  p2.dx+=p2.acc
-  p3.dx+=p3.acc
-  p4.dx+=p4.acc
-  p5.dx+=p5.acc
-  if not btn(0) then
-   pl.flip=false
-   sh.flip=false
-  end
- end
-
- p1.dx=mid(-p1.max_dx,p1.dx,p1.max_dx)
- p2.dx=mid(-p2.max_dx,p2.dx,p2.max_dx)
- p3.dx=mid(-p3.max_dx,p3.dx,p3.max_dx)
- p4.dx=mid(-p4.max_dx,p4.dx,p4.max_dx)
- p5.dx=mid(-p5.max_dx,p5.dx,p5.max_dx)
- 
- p1.x%=(128)
- p1.x-=p1.dx
- p2.x%=(128)
- p2.x-=p2.dx
- p5.x%=(128)
- p5.x-=p5.dx
- p3.x%=(128)
- p3.x-=p3.dx
- p4.x%=(128)
- p4.x-=p4.dx
 end
+
 
 function _draw() 
  cls(13)
- map(p4.cx,p4.cy,p4.x,p4.y,p4.cw,p4.ch)
- map(p4.cx,p4.cy,p4.x-128,p4.y,p4.cw,p4.ch)
- map(p3.cx,p3.cy,p3.x,p3.y,p3.cw,p3.ch)
- map(p3.cx,p3.cy,p3.x-128,p3.y,p3.cw,p3.ch)
- map(p2.cx,p2.cy,p2.x,p2.y,p2.cw,p2.ch)
- map(p2.cx,p2.cy,p2.x-128,p2.y,p2.cw,p2.ch)
- map(p5.cx,p5.cy,p5.x,p5.y,p5.cw,p5.ch)
- map(p5.cx,p5.cy,p5.x-128,p5.y,p5.cw,p5.ch)
- map(p1.cx,p1.cy,p1.x,p1.y,p1.cw,p1.ch)
- map(p1.cx,p1.cy,p1.x-128,p1.y,p1.cw,p1.ch)
- spr(sh.s,sh.x,sh.y,sh.w,sh.h,sh.flip)
- spr(pl.s,pl.x,pl.y,pl.w,pl.h,pl.flip)
+ for i=1,5 do
+  map(parallax.cx[i],parallax.cy[i],parallax.x[i],parallax.y[i],parallax.cw[i],parallax.ch[i])
+  map(parallax.cx[i],parallax.cy[i],parallax.x[i]-128,parallax.y[i],parallax.cw[i],parallax.ch[i])
+ end
+ spr(sh.s,sh.x,sh.y,sh.w,sh.h,flp)
+ spr(pl.s,pl.x,pl.y,pl.w,pl.h,flp)
 end
 __gfx__
 00000000000000008888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888
