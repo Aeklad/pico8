@@ -8,14 +8,15 @@ function _init()
  palt(0,false) -- Makes the Black Color 0 Opaque
  at=0 -- store the animation timer
  aw=0.5 -- amount of time to wait between animation frames
- friction=0.85
- acc=0
- flp=false
- left = false
- right = false
+ friction=0.85 --mulitiplied to scrolling x movement each update to slow to a stop when acc is 0
+ acc=0 --acceleration added or subtracted to scrolling x movement each update according to user input
+ flp=false --flips the sprite horizontally
+ left = false -- use this to check if any button other than left is being pressed
+ right = false --same for the right
 
  pl = { --player variables
   s=2,
+  sofst=0,
   w=2,
   h=2,
   x=24,
@@ -23,7 +24,7 @@ function _init()
   fishing=false
  }
 
- parallax = {
+ parallax = { --Map  coordinates and placement for parallax background
   cx={16,0,0,16,0},
   cy={0,0,4,8,6},
   x={0,0,0,0,0},
@@ -36,7 +37,7 @@ function _init()
 end
 
   
-function move()
+function move() -- set the acceleration variable so character appears to move left or right and flip accordingly
  acc=0
  if btn(1) and not right then acc =.5 end
  if btn(0) and not left then acc=-.5 end
@@ -47,24 +48,32 @@ function move()
  end
 end
 
+function frmflp(sp,f1,f2) --flip through specific frames on the sprite sheet
+  sp.s+=sp.w
+  if sp.s > f2 then sp.s=f1 end
+end
+
 function animate()
- if time()-at > aw then
+ if time()-at > aw then --advance frame only when actual time minus timestored is greater than aw
   if acc !=0  then
+   pl.sofst=0
    aw=.05
-   frmflp(pl,2,6)
+   frmflp(pl,2,6) -- walking animation
   elseif btn(3) then
+   pl.sofst=30
    acc=0
    aw=.2
-   frmflp(pl,32,36)
+   frmflp(pl,2,6) --fishing animation
   else
+   pl.sofst=0
    aw=.2
-   frmflp(pl,8,10)
+   frmflp(pl,8,10) --idle animation
   end
   at=time()
  end
 end
 
-function parallax_scroll()
+function parallax_scroll() --loop through the 5 map coordinate tables and apply movement
 
  for i=1,5 do
   parallax.dx[i]*=friction
@@ -76,10 +85,6 @@ function parallax_scroll()
 
 end
 
-function frmflp(sp,f1,f2)
-  sp.s+=sp.w
-  if sp.s > f2 then sp.s=f1 end
-end
 
 function _update()
  left = btn(1) or btn(2) or btn(3) or btn(4) or btn(5)
@@ -98,7 +103,7 @@ function _draw()
   map(parallax.cx[i],parallax.cy[i],parallax.x[i]-128,parallax.y[i],parallax.cw[i],parallax.ch[i])
  end
 
- spr(pl.s,pl.x,pl.y,pl.w,pl.h,flp)
+ spr((pl.s+pl.sofst),pl.x,pl.y,pl.w,pl.h,flp)
 end
 __gfx__
 00000000000000008888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888
