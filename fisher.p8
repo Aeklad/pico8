@@ -1,34 +1,28 @@
 pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
-function _init()
 
+function _init()
  poke(0x5f2c,3) --This poke doubles the pixel size: screen space is 64X64: Good for Gameshell games
  palt(8,true) --Changes the Hot Pink Color 8 to be transparent so I can use black as a solid color
  palt(0,false) -- Makes the Black Color 0 Opaque
  at=0 -- store the animation timer
  aw=0.5 -- amount of time to wait between animation frames
-
  friction=0.85
  acc=0
  flp=false
+ left = false
+ right = false
 
  pl = { --player variables
   s=2,
   w=2,
   h=2,
   x=24,
-  y=32,
+  y=33,
   fishing=false
  }
 
- sh = { --player shadow..should have just drawn this as part of the sprite
-  s=128,
-  x=24,
-  y=47,
-  w=2,
-  h=2
- }
  parallax = {
   cx={16,0,0,16,0},
   cy={0,0,4,8,6},
@@ -44,57 +38,66 @@ end
   
 function move()
  acc=0
- if btn(1) and not btn(0) then acc =.5 end
- if btn(0) and not btn(1) then acc=-.5 end
-end
- 
-
-function animate(sp,f1,f2)
-  sp.s+=sp.w
-  if sp.s > f2 then sp.s=f1 end
-end
-function _update()
- move()
+ if btn(1) and not right then acc =.5 end
+ if btn(0) and not left then acc=-.5 end
  if parallax.dx[1] < 0 then
   flp=true
  else
   flp=false
  end
+end
+
+function animate()
  if time()-at > aw then
   if acc !=0  then
    aw=.05
-   animate(pl,2,6)
-   animate(sh,128,132)
+   frmflp(pl,2,6)
   elseif btn(3) then
+   acc=0
    aw=.2
-   animate(pl,32,36)
+   frmflp(pl,32,36)
   else
    aw=.2
-   animate(pl,8,10)
-   animate(sh,134,136)
+   frmflp(pl,8,10)
   end
   at=time()
  end
+end
+
+function parallax_scroll()
 
  for i=1,5 do
-
   parallax.dx[i]*=friction
   parallax.dx[i]+=acc
   parallax.dx[i]=mid(-parallax.max_dx[i],parallax.dx[i],parallax.max_dx[i])
   parallax.x[i]%=(128)
   parallax.x[i]-=parallax.dx[i]
-
  end
+
 end
 
+function frmflp(sp,f1,f2)
+  sp.s+=sp.w
+  if sp.s > f2 then sp.s=f1 end
+end
+
+function _update()
+ left = btn(1) or btn(2) or btn(3) or btn(4) or btn(5)
+ right = btn(0) or btn(2) or btn(3) or btn(4) or btn(5)
+ 
+ move()
+ animate()
+ parallax_scroll()
+end
 
 function _draw() 
  cls(13)
+
  for i=1,5 do
   map(parallax.cx[i],parallax.cy[i],parallax.x[i],parallax.y[i],parallax.cw[i],parallax.ch[i])
   map(parallax.cx[i],parallax.cy[i],parallax.x[i]-128,parallax.y[i],parallax.cw[i],parallax.ch[i])
  end
- spr(sh.s,sh.x,sh.y,sh.w,sh.h,flp)
+
  spr(pl.s,pl.x,pl.y,pl.w,pl.h,flp)
 end
 __gfx__
