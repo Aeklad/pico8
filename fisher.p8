@@ -37,8 +37,8 @@ function _init()
   max_dx={1,1.5,2,2,3}
  }
 
- create_hole(48)
- create_hole(rnd(128))
+ create_hole(64)
+ create_hole(-64)
 end
 
 function create_hole(_x)
@@ -55,7 +55,8 @@ function create_hole(_x)
 end
   
 function collide(a,b)
- return a.w>b.x and a.x < b.x and a.h > b.y and a.y < b.y
+
+ return ((a.w*8)-14)+a.x>b.x and a.x+14 < b.w*8+b.x 
 end
  
 function move() -- set the acceleration variable so character appears to move left or right and flip accordingly
@@ -68,8 +69,8 @@ function move() -- set the acceleration variable so character appears to move le
   flp=false
  end
  for h in all(holes) do
-  if collide(h,pl) then
-  _init() 
+  if collide(pl,h) then
+  pl.y+=1 
   end
  end
 end
