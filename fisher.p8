@@ -16,9 +16,7 @@ function _init()
  fall=false
 
  pl = { --player variables
-  ani={2},
-  fish=12,
-  sofst=0,
+  s=2,
   w=2,
   h=2,
   x=24,
@@ -77,10 +75,10 @@ function frmflp(sp,f1,f2) --flip through specific frames on the sprite sheet
   if sp.s > f2 then sp.s=f1 end
 end
 
-function animate(sp,f1,f2,a,aw)
+function animate(sp,f1,f2,aw)
  if time()-at > aw then --advance frame only when actual time minus timestored is greater than aw
-  sp.ani[a]+=sp.w
-  if sp.ani[a]> f2 then sp.ani[a]=f1 end
+  sp.s+=sp.w
+  if sp.s> f2 then sp.s=f1 end
   at=time()
  end
 end
@@ -129,7 +127,7 @@ function _update()
  parallax_scroll()
  move()
  if acc !=0  then
-  animate(pl,2,6,walk,.05)
+  animate(pl,2,6,.05)
  end
 
  for h in all(holes) do
@@ -152,7 +150,7 @@ function _draw()
  for hl in all(holes) do
   spr(hl.s,hl.x,hl.y,hl.w,hl.h)
  end
- spr(pl.ani,pl.x,pl.y,pl.w,pl.h,flp)
+ spr(pl.s,pl.x,pl.y,pl.w,pl.h,flp)
 end
 __gfx__
 00000000000000008888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888
