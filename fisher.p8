@@ -19,11 +19,14 @@ function _init()
  bw=0
  ft=0
  shake=0
+ score=0
+ t=0
+ n=1
 
  pl = { --player variables
   s=2,
   w=2,
-  pw=16,
+  pw=14,
   ph=16,
   h=2,
   x=24,
@@ -44,15 +47,25 @@ function _init()
   max_dx={1,1.5,2,2,3}
  }
 
- create_hole(-64)
+ --create_hole(-64)
  create_hole(64)
+ target = {
+	 x=32,
+	 y=2,
+	 c=7
+ }
+ 
+end
+
+function lerp(tar, pos, perc)
+	return (1-perc)*tar+perc*pos
 end
 
 function create_hitbox(_x)
  local b = {
-  pw=4,
+  pw=6,
   ph=8,
-  x=_x,
+  x=_x-2,
   y=44,
   dx=0,
   max_dx=2
@@ -122,24 +135,54 @@ function fishing()
  animate(pl,12,14,.2,true)
  local tme=0
  tme+=1
- bw =rnd(4)+rnd(8) 
+  debug=tme
+ bw =rnd(4) + rnd(4) 
  if tme-ft > bw then
   biting=true
   ft=tme
  end
  if biting then 
   animate(pl,32,38,.05,true)
+  shake=.001
  end
+ return isfishing and btn(2)
 end
 
 function doshake()
- local shakex,shakey=16,16--16-rnd(32),16-rnd(32)
+ local shakex,shakey=8,8-rnd(16)
  camera(shakex*shake,shakey*shake)
  shake*=.95
  if (shake<0.05) shake=0
 end
 
+function fishometer()
+ local x,y,x2,y2=2,2,60,12
+ tx=32
+ ty=32
+ t+=1
+
+ if t%30==0 then n*=-1 end
+ if n<1 then
+	 tx=0
+ else
+	 tx=63
+ end
+
+ target.x=lerp(tx,target.x,0.9)
+
+ rect(x+1,y+1,x2+1,y2+1,1)
+ rect(x,y,x2,y2,7)
+ rectfill(x+1,y+1,x2-1,y2-1,0)
+ cursor(x+2,y+3,7)
+ if biting then
+	 line(target.x,target.y,target.x,target.y+9,7)
+ else
+	 print("fish-o-meter:"..score)
+ end
+end
+
 function _update()
+ if btnp(4) then score+=1 end
  left = btn(1) or btn(2) or btn(3) or btn(4) or btn(5)
  right = btn(0) or btn(2) or btn(3) or btn(4) or btn(5)
  
@@ -162,6 +205,11 @@ function _update()
 
  else
   acc=0
+  if pl.s<=101 then
+   shake=.2
+  else
+   shake=0
+  end
   animate(pl,102,112,.2,false)
   if pl.s >=112 then
    _init()
@@ -190,6 +238,8 @@ function _update()
    fall = true
   end
  end
+
+ 
 end
 
 function _draw() 
@@ -208,9 +258,7 @@ function _draw()
  for hb in all(hitbox) do
   line(hb.x,44,hb.x+hb.pw,44,10)
  end
- print (inposition)
- print (biting)
- print(ft)
+ fishometer()
 end
 __gfx__
 00000000000000008888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888
