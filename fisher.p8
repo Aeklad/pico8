@@ -40,7 +40,8 @@ function _init()
   ph=8,
   h=1,
   x=24,
-  y=4
+  y=4,
+  flp=false
  }
 
  site = {
@@ -177,9 +178,11 @@ function fishometer()
 
  if t%30==0 then n*=-1 end
  if n<1 then
-	 site.x=-128
+	 site.x=2
+  fish.flp=true
  else
-	 site.x=190
+	 site.x=48
+  fish.flp=false
  end
  if t%5==0 then
   fish.s=fish.s+2
@@ -187,7 +190,7 @@ function fishometer()
    fish.s=128
   end
  end
- target.x=lerp(site.x,target.x,0.98)
+ target.x=lerp(site.x,target.x,0.9)
  site.x=target.x
 
  rect(x+1,y+1,x2+1,y2+1,1)
@@ -197,16 +200,20 @@ function fishometer()
  if biting then
   if collide(fish,site) then
    print('yo')
+   c=3
+  else
+   c=7
   end
-  spr(fish.s,fish.x,fish.y,fish.w,fish.h)
-  line(target.x,target.y,target.x,target.y+9,7)
+  fish.x=32
+  fish.pw=60
+  spr(fish.s,target.x,fish.y,fish.w,fish.h,fish.flp)
+  line(32,target.y+1,target.x+2,target.y+6,c)
  else
 	 print("fish-o-meter:"..score)
  end
 end
 
 function _update()
- if btnp(4) then score+=1 end
  left = btn(1) or btn(2) or btn(3) or btn(4) or btn(5)
  right = btn(0) or btn(2) or btn(3) or btn(4) or btn(5)
  
