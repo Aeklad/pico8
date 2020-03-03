@@ -159,7 +159,6 @@ function fishing()
  end
  if biting then 
   animate(pl,32,38,.05,true)
-  shake=.001
  end
 end
 
@@ -178,9 +177,9 @@ function fishometer()
 
  if t%30==0 then n*=-1 end
  if n<1 then
-	 site.x=0
+	 site.x=-128
  else
-	 site.x=63
+	 site.x=190
  end
  if t%5==0 then
   fish.s=fish.s+2
@@ -188,22 +187,19 @@ function fishometer()
    fish.s=128
   end
  end
- target.x=lerp(site.x,target.x,0.9)
+ target.x=lerp(site.x,target.x,0.98)
  site.x=target.x
- if collide(fish,site) then
-  c=2
-  print('yo')
- else
-  c=0
- end
 
  rect(x+1,y+1,x2+1,y2+1,1)
  rect(x,y,x2,y2,7)
  rectfill(x+1,y+1,x2-1,y2-1,c)
  cursor(x+2,y+3,7)
  if biting then
+  if collide(fish,site) then
+   print('yo')
+  end
   spr(fish.s,fish.x,fish.y,fish.w,fish.h)
-	 line(target.x,target.y,target.x,target.y+9,7)
+  line(target.x,target.y,target.x,target.y+9,7)
  else
 	 print("fish-o-meter:"..score)
  end
