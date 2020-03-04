@@ -41,13 +41,18 @@ function _init()
   h=1,
   x=24,
   y=4,
-  flp=false
+  flp=false,
+  c=7
  }
 
- hook = {
+ target = {
   x=32,
   y=0,
-  pw=2,
+ }
+ 
+ hook = {
+  x=8,
+  pw=2
  }
 
  holes={}
@@ -66,16 +71,11 @@ function _init()
 
  --create_hole(-64)
  create_hole(64)
- target = {
-	 x=32,
-	 y=2,
-	 c=7
- }
  
 end
 
 function lerp(tar, pos, perc)
-	return (1-perc)*tar+perc*pos
+ return (1-perc)*tar+perc*pos
 end
 
 function create_hitbox(_x)
@@ -160,7 +160,7 @@ function fishing()
  end
  if biting then 
   animate(pl,32,38,.05,true)
-  hookfish(hook,fish)
+  hookfish(target,fish)
  end
 end
 
@@ -176,70 +176,47 @@ function scoreboard(f)
  rect(x,y,x2,y2,7)
  rectfill(x+1,y+1,x2-1,y2-1,c)
  cursor(x+2,y+3,7)
+
  if biting then
   line(32,f.y,f.x+(f.pw)/2,f.y+3,1)
+  line(hook.x,4,hook.x,10,7)
+  pal(7,fish.c)
   spr(f.s,f.x,f.y,f.w,f.h,f.flp)
+  pal(7,7)
  else
-   print("fish-o-meter:"..score)
+  print("fish-o-meter:"..score)
  end
+
 end
 
-function hookfish(h,f)
+function hookfish(tar,f)
  t+=1
  if t%30==0 then n*=-1 end
+
  if n<1 then
-	 h.x=2
+	 tar.x=2
   f.flp=true
  else
-	 h.x=48
+	 tar.x=48
   f.flp=false
  end
+ 
  if t%5==0 then
   f.s=f.s+2
   if f.s >134 then
    f.s=128
   end
  end
- f.x=lerp(h.x,f.x,0.9)
- h.x=f.x
+
+ f.x=lerp(tar.x,f.x,0.9)
+ tar.x=f.x
+ if collide(hook,fish) then
+  fish.c=11
+ else
+  fish.c=7
+ end
 
 end
---function fishometer()
--- tx=32
--- t+=1
--- c=0
---
--- if t%30==0 then n*=-1 end
--- if n<1 then
---	 site.x=2
---  fish.flp=true
--- else
---	 site.x=48
---  fish.flp=false
--- end
--- if t%5==0 then
---  fish.s=fish.s+2
---  if fish.s >134 then
---   fish.s=128
---  end
--- end
--- target.x=lerp(site.x,target.x,0.9)
--- site.x=target.x
---
--- if biting then
---  if collide(fish,site) then
---   print('yo')
---   c=3
---  else
---   c=7
---  end
---  fish.x=32
---  fish.pw=60
---  spr(fish.s,target.x,fish.y,fish.w,fish.h,fish.flp)
---  line(32,target.y+1,target.x+2,target.y+6,c)
--- end
---end
-
 
 function _update()
  left = btn(1) or btn(2) or btn(3) or btn(4) or btn(5)
@@ -316,9 +293,6 @@ function _draw()
   spr(hl.s,hl.x,hl.y,hl.w,hl.h)
  end
  spr(pl.s,pl.x,pl.y,pl.w,pl.h,flp)
- for hb in all(hitbox) do
-  line(hb.x,44,hb.x+hb.pw,44,10)
- end
 end
 __gfx__
 00000000000000008888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888
