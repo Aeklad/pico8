@@ -44,7 +44,7 @@ function _init()
   flp=false
  }
 
- site = {
+ hook = {
   x=32,
   y=0,
   pw=2,
@@ -160,6 +160,7 @@ function fishing()
  end
  if biting then 
   animate(pl,32,38,.05,true)
+  hookfish(hook,fish)
  end
 end
 
@@ -169,49 +170,76 @@ function doshake()
  shake*=.95
  if (shake<0.05) shake=0
 end
-
-function fishometer()
+function scoreboard(f)
  local x,y,x2,y2=2,2,60,12
- tx=32
- t+=1
- c=0
-
- if t%30==0 then n*=-1 end
- if n<1 then
-	 site.x=2
-  fish.flp=true
- else
-	 site.x=48
-  fish.flp=false
- end
- if t%5==0 then
-  fish.s=fish.s+2
-  if fish.s >134 then
-   fish.s=128
-  end
- end
- target.x=lerp(site.x,target.x,0.9)
- site.x=target.x
-
  rect(x+1,y+1,x2+1,y2+1,1)
  rect(x,y,x2,y2,7)
  rectfill(x+1,y+1,x2-1,y2-1,c)
  cursor(x+2,y+3,7)
  if biting then
-  if collide(fish,site) then
-   print('yo')
-   c=3
-  else
-   c=7
-  end
-  fish.x=32
-  fish.pw=60
-  spr(fish.s,target.x,fish.y,fish.w,fish.h,fish.flp)
-  line(32,target.y+1,target.x+2,target.y+6,c)
+  line(32,f.y,f.x+(f.pw)/2,f.y+3,1)
+  spr(f.s,f.x,f.y,f.w,f.h,f.flp)
  else
-	 print("fish-o-meter:"..score)
+   print("fish-o-meter:"..score)
  end
 end
+
+function hookfish(h,f)
+ t+=1
+ if t%30==0 then n*=-1 end
+ if n<1 then
+	 h.x=2
+  f.flp=true
+ else
+	 h.x=48
+  f.flp=false
+ end
+ if t%5==0 then
+  f.s=f.s+2
+  if f.s >134 then
+   f.s=128
+  end
+ end
+ f.x=lerp(h.x,f.x,0.9)
+ h.x=f.x
+
+end
+--function fishometer()
+-- tx=32
+-- t+=1
+-- c=0
+--
+-- if t%30==0 then n*=-1 end
+-- if n<1 then
+--	 site.x=2
+--  fish.flp=true
+-- else
+--	 site.x=48
+--  fish.flp=false
+-- end
+-- if t%5==0 then
+--  fish.s=fish.s+2
+--  if fish.s >134 then
+--   fish.s=128
+--  end
+-- end
+-- target.x=lerp(site.x,target.x,0.9)
+-- site.x=target.x
+--
+-- if biting then
+--  if collide(fish,site) then
+--   print('yo')
+--   c=3
+--  else
+--   c=7
+--  end
+--  fish.x=32
+--  fish.pw=60
+--  spr(fish.s,target.x,fish.y,fish.w,fish.h,fish.flp)
+--  line(32,target.y+1,target.x+2,target.y+6,c)
+-- end
+--end
+
 
 function _update()
  left = btn(1) or btn(2) or btn(3) or btn(4) or btn(5)
@@ -282,6 +310,8 @@ function _draw()
   map(parallax.cx[i],parallax.cy[i],parallax.x[i]-128,parallax.y[i],parallax.cw[i],parallax.ch[i])
  end
 
+ scoreboard(fish)
+
  for hl in all(holes) do
   spr(hl.s,hl.x,hl.y,hl.w,hl.h)
  end
@@ -289,7 +319,6 @@ function _draw()
  for hb in all(hitbox) do
   line(hb.x,44,hb.x+hb.pw,44,10)
  end
- fishometer()
 end
 __gfx__
 00000000000000008888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888
