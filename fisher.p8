@@ -16,12 +16,16 @@ function _init()
  fall=false
  inposition=false
  biting=false
+ isfishing=false
+ catching=false
  bw=0
  ft=0
  shake=0
  score=0
  t=0
  n=1
+ c1=0
+ c2=0
 
  pl = { --player variables
   s=2,
@@ -40,9 +44,10 @@ function _init()
   ph=8,
   h=1,
   x=24,
-  y=4,
+  y=51,
   flp=false,
-  c=7
+  c1=7,
+  c2=6
  }
 
  target = {
@@ -51,7 +56,7 @@ function _init()
  }
  
  hook = {
-  x=8,
+  x=32,
   pw=2
  }
 
@@ -126,6 +131,7 @@ function animate(sp,f1,f2,aw,loop)
  if time()-at > aw then --advance frame only when actual time minus timestored is greater than aw
   sp.s+=sp.w
   if sp.s> f2 then 
+   catching=false
    if loop then
     sp.s=f1 
    else
@@ -171,25 +177,26 @@ function doshake()
  if (shake<0.05) shake=0
 end
 function scoreboard(f)
- local x,y,x2,y2=2,2,60,12
+ local x,y,x2,y2=2,50,60,62
+
+ if biting then
  rect(x+1,y+1,x2+1,y2+1,1)
  rect(x,y,x2,y2,7)
  rectfill(x+1,y+1,x2-1,y2-1,c)
  cursor(x+2,y+3,7)
-
- if biting then
   line(32,f.y,f.x+(f.pw)/2,f.y+3,1)
-  line(hook.x,4,hook.x,10,7)
-  pal(7,fish.c)
+  --line(hook.x,52,hook.x,60,7)
+  pal(f.c1,c1)
+  pal(f.c2,c2)
   spr(f.s,f.x,f.y,f.w,f.h,f.flp)
-  pal(7,7)
- else
-  print("fish-o-meter:"..score)
+  pal(f.c1,f.c1)
+  pal(f.c2,f.c2)
  end
 
 end
 
 function hookfish(tar,f)
+ local fc1,fc2=f.c1,f.c2
  t+=1
  if t%30==0 then n*=-1 end
 
@@ -210,11 +217,35 @@ function hookfish(tar,f)
 
  f.x=lerp(tar.x,f.x,0.9)
  tar.x=f.x
- if collide(hook,fish) then
-  fish.c=11
- else
-  fish.c=7
+ if collide(hook,f) then
+  c1=15
+  c2=14
+ if btnp(2) then
+  biting=false
+  isfishing=false
+  catchfish()
  end
+ else
+ if btnp(2) then
+  isfishing=false
+  biting=false
+  lostfish()
+ end
+  c1=fc1
+  c2=fc2
+ end
+
+end
+
+function catchfish()
+ score+=1
+ catching=true
+ holes={}
+ hitbox={}
+ create_hole(-64+rnd(128))
+end
+
+function lostfish()
 
 end
 
@@ -226,14 +257,19 @@ function _update()
 
  parallax_scroll()
  move()
+
+ if not isfishing and btn(3) then
+  isfishing=true
+ end
  
   if acc !=0  then
    animate(pl,2,6,.05,true)
-  elseif btn(3) and inposition then
+  elseif isfishing and inposition then
    fishing()
-  elseif btn(2) then
+  elseif catching then
    animate(pl,32,44,.05,false)
   else 
+   isfishing=false
    ft=0
    biting=false
    animate(pl,8,10,.2,true)
