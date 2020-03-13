@@ -18,6 +18,7 @@ function _init()
  biting=false
  isfishing=false
  catching=false
+ landing=false
  bw=0
  ft=0
  shake=0
@@ -164,8 +165,8 @@ function _init()
 
  --create_hole(-64)
  create_hole(64)
- 
 end
+ 
 
 function lerp(tar, pos, perc)
  return (1-perc)*tar+perc*pos
@@ -220,7 +221,10 @@ function animate(sp,f1,f2,aw,loop)
  if time()-at > aw then --advance frame only when actual time minus timestored is greater than aw
   sp.s+=sp.w
   if sp.s> f2 then 
-   catching=false
+   if not landing then
+    landing=true
+    landfish()
+   end
    if loop then
     sp.s=f1 
    else
@@ -253,9 +257,14 @@ function fishing()
   biting=true
   ft=tme
  end
- if biting then 
-  animate(pl,32,38,.05,true)
-  hookfish(target,fish[typ])
+end
+function draw_fish(f)
+ if biting or catching then
+  pal(f.c1,c1)
+  pal(f.c2,c2)
+  spr(f.s,f.x,f.y,f.w,f.h,f.flp)
+  pal(f.c1,f.c1)
+  pal(f.c2,f.c2)
  end
 end
 
@@ -269,67 +278,72 @@ function scoreboard(f)
  local x,y,x2,y2=2,50,60,62
 
  if biting then
- rect(x+1,y+1,x2+1,y2+1,1)
- rect(x,y,x2,y2,7)
- rectfill(x+1,y+1,x2-1,y2-1,0)
- cursor(x+2,y+3,7)
+  rect(x+1,y+1,x2+1,y2+1,1)
+  rect(x,y,x2,y2,7)
+  rectfill(x+1,y+1,x2-1,y2-1,0)
+  cursor(x+2,y+3,7)
   line(32,f.y,f.x+(f.pw)/2,f.y+3,1)
   --line(hook.x,52,hook.x,60,7)
-  pal(f.c1,c1)
-  pal(f.c2,c2)
-  spr(f.s,f.x,f.y,f.w,f.h,f.flp)
-  pal(f.c1,f.c1)
-  pal(f.c2,f.c2)
  end
 
 end
 
-function hookfish(tar,f)
+function update_fish(tar,f)-- Elseif Catching 'do fling' else no fish on screen
  local fc1,fc2=f.c1,f.c2
  t+=1
- if t%30==0 then n*=-1 end
+ if biting then
+  if t%30==0 then n*=-1 end
 
- if n<1 then
-	 tar.x=2
-  f.flp=true
- else
-	 tar.x=48
-  f.flp=false
- end
- 
- if t%5==0 then
-  f.s=f.s+f.w
-  if f.s >f.lf then
-   f.s=f.ff
+  if n<1 then
+   tar.x=2
+   f.flp=true
+  else
+   tar.x=48
+   f.flp=false
+  end
+  
+  if t%5==0 then
+   f.s=f.s+f.w
+   if f.s >f.lf then
+    f.s=f.ff
+   end
+  end
+
+  f.x=lerp(tar.x,f.x,0.9)
+  tar.x=f.x
+  if collide(hook,f) then
+   c1=15
+   c2=14
+   if btnp(2) then
+    biting=false
+    isfishing=false
+    catchfish(f)
+   end
+  else
+   if btnp(2) then
+    isfishing=false
+    biting=false
+    lostfish()
+   end
+   c1=fc1
+   c2=fc2
   end
  end
-
- f.x=lerp(tar.x,f.x,0.9)
- tar.x=f.x
- if collide(hook,f) then
-  c1=15
-  c2=14
- if btnp(2) then
-  biting=false
-  isfishing=false
-  catchfish()
- end
- else
- if btnp(2) then
-  isfishing=false
-  biting=false
-  lostfish()
- end
-  c1=fc1
-  c2=fc2
+ if catching then
+  f.x=32
+  f.y=10
  end
 
 end
 
-function catchfish()
+function catchfish(f)
  shake=.1
  score+=1
  catching=true
+ landing=false
+end
+function landfish()
+ catching=false
  holes={}
  hitbox={}
  create_hole(-64+rnd(128))
@@ -347,6 +361,10 @@ function _update()
 
  parallax_scroll()
  move()
+ if biting then 
+ update_fish(target,fish[typ])
+  animate(pl,32,38,.05,true)
+ end
 
  if not isfishing and btn(3) then
   isfishing=true
@@ -357,7 +375,7 @@ function _update()
   elseif isfishing and inposition then
    fishing()
   elseif catching then
-   animate(pl,32,44,.05,false)
+   animate(pl,32,44,.9,false)
   else 
    isfishing=false
    ft=0
@@ -414,11 +432,13 @@ function _draw()
  end
 
  scoreboard(fish[typ])
+ draw_fish(fish[typ])
 
  for hl in all(holes) do
   spr(hl.s,hl.x,hl.y,hl.w,hl.h)
  end
  spr(pl.s,pl.x,pl.y,pl.w,pl.h,flp)
+ print(biting)
 end
 __gfx__
 00000000000000008888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888
