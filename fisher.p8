@@ -28,6 +28,7 @@ function _init()
  c1=0
  c2=0
  typ=1
+ hole_pos={-16,16,-24,24,-32,32,-48,48,-56,56,-64,64,-80,80,-92,92,-128,128,-256,256}
 
  pl = { --player variables
   s=2,
@@ -137,7 +138,7 @@ function _init()
   c1=1,
   c2=7
  }
- fish={silver,blue,gold,brown,pickerel,piranha,whale}
+ fish={gold,blue,silver,brown,pickerel,piranha,whale}
 
  target = {
   x=32,
@@ -185,7 +186,8 @@ function create_hitbox(_x)
 end
 
 function create_hole(_x)
- typ=flr(rnd(7)+1)
+ if typ>7 then score=0 end
+ typ=score+1 --flr(rnd(7)+1)
  local b = {
   s=97,
   w=3,
@@ -314,13 +316,13 @@ function update_fish(tar,f)-- Elseif Catching 'do fling' else no fish on screen
   if collide(hook,f) then
    c1=15
    c2=14
-   if btnp(2) then
+   if btnp(2) or btnp(4) or btnp(5) then
     biting=false
     isfishing=false
     catchfish(f)
    end
   else
-   if btnp(2) then
+   if btnp(2) or btnp(4) or btnp(5) then
     isfishing=false
     biting=false
     lostfish()
@@ -330,8 +332,7 @@ function update_fish(tar,f)-- Elseif Catching 'do fling' else no fish on screen
   end
  end
  if catching then
-  f.x=32
-  f.y=10
+  f.y+=1
  end
 
 end
@@ -346,7 +347,7 @@ function landfish()
  catching=false
  holes={}
  hitbox={}
- create_hole(-64+rnd(128))
+ create_hole(pl.x+hole_pos[flr(rnd(20)+1)])
 end
 
 function lostfish()
@@ -375,7 +376,7 @@ function _update()
   elseif isfishing and inposition then
    fishing()
   elseif catching then
-   animate(pl,32,44,.9,false)
+   animate(pl,32,44,.2,false)
   else 
    isfishing=false
    ft=0
@@ -438,7 +439,8 @@ function _draw()
   spr(hl.s,hl.x,hl.y,hl.w,hl.h)
  end
  spr(pl.s,pl.x,pl.y,pl.w,pl.h,flp)
- print(biting)
+ cursor(20,0,0)
+ print("fish: "..score)
 end
 __gfx__
 00000000000000008888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888
