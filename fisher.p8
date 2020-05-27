@@ -144,6 +144,10 @@ function _init()
   x=32,
   y=0,
  }
+ target2 = {
+  x=0,
+  y=0
+ }
  
  hook = {
   x=32,
@@ -290,7 +294,7 @@ function scoreboard(f)
 
 end
 
-function update_fish(tar,f)-- Elseif Catching 'do fling' else no fish on screen
+function update_fish(tar,f)-- Look at this update fish tar is pointless
  local fc1,fc2=f.c1,f.c2
  t+=1
  if biting then
@@ -331,9 +335,6 @@ function update_fish(tar,f)-- Elseif Catching 'do fling' else no fish on screen
    c2=fc2
   end
  end
- if catching then
-  f.y+=1
- end
 
 end
 
@@ -365,6 +366,8 @@ function _update()
  if biting then 
  update_fish(target,fish[typ])
   animate(pl,32,38,.05,true)
+ elseif catching then
+  update_fish(target2,fish[typ])
  end
 
  if not isfishing and btn(3) then

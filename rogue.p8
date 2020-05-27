@@ -251,6 +251,7 @@ function update_gover()
   sfx(54)
   fadeout()
   load("rogue.pi")
+  random=rnd()
   startgame()
  end
  --gameover

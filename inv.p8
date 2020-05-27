@@ -27,7 +27,7 @@ gamestate=0
   falling=false,
   sliding=false,
   landing=false,
-  health=10
+  health=200
  }
  gravity = 0.3
  friction=0.85
