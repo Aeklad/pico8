@@ -115,12 +115,12 @@ function startgame()
  talkwind = nil
  hpwind=addwind(5,5,38,13,{})
  thrdx,thrdy=0,-1
- takeitem(12)
- takeitem(13)
- takeitem(14)
- takeitem(15)
- takeitem(16)
- takeitem(17)
+ --takeitem(12)
+ --takeitem(13)
+ --takeitem(14)
+ --takeitem(15)
+ --takeitem(16)
+ --takeitem(17)
  _upd=update_game
  _drw=draw_game
  st_steps,st_kills,st_meals,st_killer=0,0,0,""
@@ -634,7 +634,7 @@ function trig_bump(tle,destx,desty)
     if freeinvslot()==0 then
      local itm=getrnd(fipool_com)
      --showmsg("found! "..itm_name[itm],60) 
-     --showmsg("inventory full",120)
+     showmsg("inventory full",120)
      mset(destx,desty,itm_ico[itm])
      sfx(61)
     else
@@ -652,7 +652,7 @@ function trig_bump(tle,destx,desty)
    itm=getitm_rar()
   end
   if freeinvslot()==0 then
-  -- showmsg("inventory full",120)
+   showmsg("inventory full",120)
    --showmsg("found! "..itm_name[itm],60) 
    sfx(61)
    mset(destx,desty,tle-1)
@@ -791,7 +791,6 @@ function hitmob(atkm,defm,rawdmg)
    -- showmsg("inventory full",60)
     mset(defm.x,defm.y,itm_ico[defm.loot])
    end
-   sfx(60)
   end
   del(mob,defm)
   defm.dur=10
