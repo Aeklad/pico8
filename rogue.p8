@@ -1610,6 +1610,7 @@ function genfloor(f)
   unfog()
  elseif floor==winfloor then
   copymap(32,0)
+  fog=blankmap(0)
  else
   fog=blankmap(1)
   mapgen()
