@@ -9,16 +9,16 @@ function _init()
  random=rnd()
  floorsd={}
  challenge =false 
- day = stat(92)+5
+ day = stat(92)
  month= stat(91)
  year= stat(90)
 
  daily=day*0.1+month*3.1+(year-2019)*37.2
- srand(daily)
+// srand(daily)
  for i=0, 7 do
   floorsd[i]=dice()
  end
- srand(floorsd[1])
+ // srand(floorsd[1])
  t=0
  shake=0
  dpal=explodeval("0,1,1,2,1,13,6,4,4,9,3,13,1,13,14")
@@ -83,7 +83,7 @@ function _draw()
 end
 
 function startgame()
- srand(rnd(random))
+ srand(random)
  oldseed=dget(0)
  poke(0x3101,194)--start loop
  music(0)
@@ -1620,9 +1620,8 @@ end
 
 function mapgen()
  if challenge then
-  srand(floorsd[floor])
+  srand(daily)
  else
-  random=rnd()
   srand(random)
  end
  repeat

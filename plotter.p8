@@ -2,25 +2,7 @@ pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
 
-
-r = 20
-angle = 0
-x = 64
-y = 64
-function _circle(x,y,r,a,col)
-circ(cos(a),sin(a),r,col)
-end
-cls()
-function _draw()
-	for angle = 0, .99, .01 do
-		pset(x + (cos(angle)*r), y +(sin(angle)*r), 15)
-		pset(x + (cos(angle)*4), y +(sin(angle)*3), 14)
-		_circle(x + (cos(angle)*r), y +(sin(angle)*r),r,angle,12)
 		
-	end
-	print("Hey What's up Yo,64,64")
-	print("I'm the freakin coolest")
-	print("and you are not")
 			
 end
 __gfx__

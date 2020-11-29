@@ -315,7 +315,7 @@ function update_fish(tar,f)-- Look at this update fish tar is pointless
    end
   end
 
-  f.x=lerp(tar.x,f.x,0.9)
+  f.x=lerp(tar.x,f.x,.999)
   tar.x=f.x
   if collide(hook,f) then
    c1=15
