@@ -6,19 +6,12 @@ function _init()
  debug={}
  cartdata("aeklad_dungeon_v1")
  oldseed=dget(0)
- random=rnd()
  floorsd={}
  challenge =false 
  day = stat(92)
  month= stat(91)
  year= stat(90)
-
  daily=day*0.1+month*3.1+(year-2019)*37.2
-// srand(daily)
- for i=0, 7 do
-  floorsd[i]=dice()
- end
- // srand(floorsd[1])
  t=0
  shake=0
  dpal=explodeval("0,1,1,2,1,13,6,4,4,9,3,13,1,13,14")
@@ -83,7 +76,6 @@ function _draw()
 end
 
 function startgame()
- srand(random)
  oldseed=dget(0)
  poke(0x3101,194)--start loop
  music(0)
@@ -259,7 +251,6 @@ function update_gover()
   sfx(54)
   fadeout()
   load("rogue.pi")
-  random=rnd()
   startgame()
  end
  --gameover
@@ -700,6 +691,7 @@ function trig_step()
   floormsg()
   return true
  elseif tle==5 then
+  srand(daily)
   dset(0,daily)
   challenge=true
   fadeout()
@@ -1619,11 +1611,6 @@ function genfloor(f)
 end
 
 function mapgen()
- if challenge then
-  srand(daily)
- else
-  srand(random)
- end
  repeat
   copymap(48,0)
   rooms={}
