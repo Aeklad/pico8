@@ -5,7 +5,8 @@ __lua__
 function _init()
  debug={}
  cartdata("aeklad_dungeon_v1")
- dset(0,0)
+ random=rnd()
+ seed=random
  oldseed=dget(0)
  floorsd={}
  challenge =false 
@@ -78,6 +79,7 @@ end
 
 function startgame()
  oldseed=dget(0)
+ seed=random
  poke(0x3101,194)--start loop
  music(0)
  tani=0
@@ -693,7 +695,7 @@ function trig_step()
   return true
  elseif tle==5 then
   sfx(55)
-  srand(daily)
+  seed=daily
   dset(0,daily)
   challenge=true
   fadeout()
