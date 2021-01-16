@@ -48,12 +48,39 @@ function drawmatrix()
        b.c)
       end
      end
+
+
      
 function drawnum()
  for n in all (nums) do
   print(n.x,n.y,n.n)
  end
 end
+
+function scan_text(text)
+ cls()
+ print(text,0,0,1)
+ local scan={}
+ for x=0,(#text)*4 do
+  scan[x]={}
+  for y=0,6 do
+   scan[x][y]=pget(x,y)
+  end
+ end
+ cls()
+ return scan
+end
+function put_text(text,x,y,w,h,xscl,yscl,c)
+ local i,j
+ for i=0,#text do
+  for j=0,6 do
+   if text[i][j]==1 then 
+    rectfill(i*xscl+x,j*yscl+y,(i*xscl+x)+w,(j*yscl+y)+h,c)
+   end
+  end
+ end
+end
+
 
 function dice()
  return flr(rnd(8)+1)
@@ -64,6 +91,7 @@ end
   circ(40,40,dice())
   print(floorsd[i])
  end
+ msg=scan_text('yorp')
  
 function _update()
  cls()
@@ -76,9 +104,10 @@ s=stat(95)
 
 end
 function _draw()
-print(h..":"..m..":"..s)
-print(month.."/"..day.."/"..year)
-spr(1,60,60)
+msg=scan_text(h..":"..m..":"..s)
+msg2=scan_text(month.."/"..day.."/"..year)
+put_text(msg,0,30,1,2,2,2,12)
+put_text(msg2,0,0,.5,.5,3,3,2)
 end
 
 __gfx__
