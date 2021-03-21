@@ -5,11 +5,11 @@ __lua__
 function _init()
  debug={}
  cartdata("aeklad_dungeon_v1")
+ dset(0,0)
  random=rnd()
  seed=random
  oldseed=dget(0)
  floorsd={}
- challenge =false 
  day = stat(92)
  month= stat(91)
  year= stat(90)
@@ -83,6 +83,7 @@ function _draw()
 end
 
 function startgame()
+ challenge=false
  oldseed=dget(0)
  seed=random
  poke(0x3101,194)--start loop
@@ -1588,7 +1589,7 @@ end
 function genfloor(f)
  if challenge then  
   srand(floorsd[f])
-  challenge= false
+  --challenge= false
  end
  floor=f
  makefipool()
