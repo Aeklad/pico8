@@ -1,35 +1,95 @@
 pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
-function _init()
- target = {
-  x=64,
-  y=64,
-  c=7
+t=0
+x=0
+y=0
+speed =0
+friction =.9
+ship = {
+ pos = {
+  x=40,
+  y=60
+ },
+ rotspeed = .03,
+ rot = .5,
+ col = 4,
+  points = {
+   {x=4,y=0},
+   {x=-4,y=3},
+   {x=-2,y=0},
+   {x=-4,y=-3},
+   {x=4,y=0}
+},
+}
+testpoint = {x=5,y=10}
+function rotatepoint(point,rotation)
+ rotatedpoint ={
+ x=
+ (point.x*cos(rotation))-(point.y*sin(rotation)),
+ y =
+ (point.y*cos(rotation))+(point.x*sin(rotation))
  }
-
+ return rotatedpoint
 end
-
-function lerp(tar,pos,perc)
- return (1-perc)*tar+perc*pos
+ 
+function drawshape(shape)
+ local firstpoint = true
+ local rotatedpoint = 0
+ local lastpoint =0
+ for k, point in pairs(shape.points) do 
+  rotatedpoint=rotatepoint(point,shape.rot)
+  if firstpoint then
+   lastpoint = rotatedpoint
+   firstpoint= false
+  else
+   line(lastpoint.x + shape.pos.x,
+   lastpoint.y + shape.pos.y,
+   rotatedpoint.x+shape.pos.x,
+   rotatedpoint.y+shape.pos.y,
+   shape.col)
+   lastpoint=rotatedpoint
+  end
+ end
 end
-
+function range(range)
+ if range > 1 then
+  range-=1
+ end
+ if range < 0 then 
+  range+=1
+ end
+ return range
+end
+function checkbuttons()
+ local adjrot=0
+ if btn(2) then speed+=.4 end
+ if btn(0) then ship.rot+=ship.rotspeed end
+ if btn(1) then ship.rot-=ship.rotspeed end
+ ship.rot=range(ship.rot)
+end
 function _update()
- tx=64
- ty=64
- if btn(0) then tx=0 end
- if btn(1) then tx=128 end
- if btn(2) then ty=0 end
- if btn(3) then ty=128 end
- target.x = lerp(tx,target.x,0.9)
- target.y = lerp(ty,target.y,0.9)
+ t+=1
+ ship.pos.x += cos(ship.rot)*speed
+ ship.pos.y += sin(ship.rot)*speed
+ speed*=friction
+ checkbuttons()
+ ship.pos.x%=(128) 
+ ship.pos.y%=(128)
+ if t%(flr(rnd(10)+20))==0 then
+  speed = rnd(7)
+  if t%2==0 then 
+   ship.rot=rnd(1)
+  end
+ end
 end
  
 
 function _draw()
  cls()
- line(target.x,target.y,target.x,target.y+10)
- 
+ drawshape(ship)
+-- line(target.x,target.y,target.x,targemt.y+10)
+rect(0,0,127,127,3)
 end
 
 __gfx__

@@ -61,7 +61,7 @@ function scan_text(text)
  cls()
  print(text,0,0,1)
  local scan={}
- for x=0,(#text)*4 do
+ for x=0,(#text)*6 do
   scan[x]={}
   for y=0,6 do
    scan[x][y]=pget(x,y)
@@ -91,9 +91,22 @@ end
   circ(40,40,dice())
   print(floorsd[i])
  end
- msg=scan_text('yorp')
+ box={
+     x=64,
+     y=064,
+     vx=1,
+     vy=1,
+     maxv=1.5,
+     w=55,
+     h=20
+    }
+function randomrange(a,b)
+ return flr(rnd(b-a))+1
+end
  
-function _update()
+c=1
+c2=1
+function _update60()
  cls()
 year=stat(90)
 month=stat(91)
@@ -101,13 +114,27 @@ day=stat(92)
 h=stat(93)
 m=stat(94)
 s=stat(95)
+if btn(0) then box.x-=box.vx end
+if btn(1) then box.x+=box.vx end
+if btn(2) then box.y+=box.vy end
+if btn(3) then box.y-=box.vy end
+if btnp(4) then c+=1 end
+if btnp(5) then c2+=1 end
+if box.vx >1.5 then box.vx=box.maxv end
+if box.vy >1.5 then box.vy=box.maxv end
+if box.x +box.w > 127 then box.vx*=-1 end
+if box.x < 0 then box.vx*=-1 end
+if box.y+box.h > 127 then box.vy*=-1 end
+if box.y < 0 then box.vy*=-1 end
 
 end
 function _draw()
 msg=scan_text(h..":"..m..":"..s)
 msg2=scan_text(month.."/"..day.."/"..year)
-put_text(msg,0,30,1,2,2,2,12)
-put_text(msg2,0,0,.5,.5,3,3,2)
+msg3=scan_text("♥")
+put_text(msg,box.x,box.y,1,2,4,4,c)
+put_text(msg2,0,3,.5,.5,1,1,c2)
+--put_text(msg3,40,40,3,3,6,6,09)
 end
 
 __gfx__

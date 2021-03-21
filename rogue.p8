@@ -14,6 +14,11 @@ function _init()
  month= stat(91)
  year= stat(90)
  daily=day*0.1+month*3.1+(year-2019)*37.2
+ srand(daily)
+ for i=0,7 do
+  floorsd[i]=rnd()+i
+ end
+ srand(random)
  t=0
  shake=0
  dpal=explodeval("0,1,1,2,1,13,6,4,4,9,3,13,1,13,14")
@@ -667,7 +672,7 @@ function trig_bump(tle,destx,desty)
   --stone tablet
   if floor==0 then
    sfx(54)
-   showtalk(explode(" this is a scary, and dark dungeon., you might die. "))
+   showtalk(explode(" this is a dark, and scary place., north is bad, east is worse, but only open, once per day. "))
   end
  elseif tle==110 then
   win=true
@@ -1581,6 +1586,10 @@ end
 --tab 7 level gen
 
 function genfloor(f)
+ if challenge then  
+  srand(floorsd[f])
+  challenge= false
+ end
  floor=f
  makefipool()
  mob={}
