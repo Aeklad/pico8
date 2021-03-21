@@ -1590,6 +1590,7 @@ function genfloor(f)
  if challenge then  
   srand(floorsd[f])
   --challenge= false
+  debug[1]=floorsd[f]
  end
  floor=f
  makefipool()
