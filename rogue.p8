@@ -388,11 +388,11 @@ function draw_gover()
  color(5)
  cursor(40,56)
  if not win then
-  print("floor: "..floor)
+  print("level: "..floor)
  end
  print("steps: "..st_steps)
  print("kills: "..st_kills)
- print("meals: "..st_meals)
+ print("drank: "..st_meals)
  print("press x",46,90,5+abs(sin(time()/3)*2))
 end
 
@@ -1240,7 +1240,7 @@ function triguse()
 end
 
 function floormsg()
- showmsg("floor "..floor,120)
+ showmsg("level "..floor,120)
 end
 function showhint()
  if hintwind then
