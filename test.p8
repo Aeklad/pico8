@@ -1,18 +1,27 @@
 pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
+statestart=0
+stateplay=10
+stateend=20
+gamestate=statestart
+
 t=0
 x=0
 y=0
-speed =0
 friction =.9
 ship = {
  pos = {
   x=40,
   y=60
  },
+ vel= {
+  speed =0,
+  direction =0
+ },
+ acc=0.05,
  rotspeed = .03,
- rot = .5,
+ rot = 0,
  col = 4,
   points = {
    {x=4,y=0},
@@ -37,7 +46,7 @@ function drawshape(shape)
  local firstpoint = true
  local rotatedpoint = 0
  local lastpoint =0
- for k, point in pairs(shape.points) do 
+ for k, point in ipairs(shape.points) do 
   rotatedpoint=rotatepoint(point,shape.rot)
   if firstpoint then
    lastpoint = rotatedpoint
@@ -63,19 +72,70 @@ function range(range)
 end
 function checkbuttons()
  local adjrot=0
- if btn(2) then speed+=.4 end
+ -- thrust if btn(2) then speed+=.4 end
  if btn(0) then ship.rot+=ship.rotspeed end
  if btn(1) then ship.rot-=ship.rotspeed end
  ship.rot=range(ship.rot)
 end
-function _update()
- t+=1
- ship.pos.x += cos(ship.rot)*speed
- ship.pos.y += sin(ship.rot)*speed
- speed*=friction
- checkbuttons()
+function thrust()
+ local acc = {
+  speed = ship.acc,
+  direction = ship.rot
+ }
+ --check addvectors function
+ ship.vel=addvectors(ship.vel,acc)
+end
+function addvectors(vector1,vector2)
+ v1comp = getvectorcomp(vector1)
+ v2comp = getvectorcomp(vector2)
+ resultantx = v1comp.xcomp +v2comp.xcomp
+ resultanty = v1comp.ycomp +v2comp.ycomp
+ local resvector = comptovector(resultantx,resultanty)
+ return resvector
+
+end
+function getvectorcomp(vector)
+ local xcomp = vector.speed*cos(vector.direction)
+ local ycomp= vector.speed*sin(vector.direction)
+ local components = {
+  xcomp = xcomp,
+  ycomp = ycomp
+ }
+ return components
+end
+testvector=getvectorcomp(ship.vel)
+function comptovector(x,y)
+ local magnitude = sqrt((x*x)+(y*y))
+ local direction = atan2(x,y)
+ direction = range(direction)
+ local vector = {
+  speed = magnitude,
+  direction = direction
+ }
+ return vector
+end
+function movepointbyvelocity(object)
+ comp = getvectorcomp(object.vel)
+ local newpos= {
+  x=object.pos.x + comp.xcomp,
+  y=object.pos.y + comp.ycomp
+ }
+ return newpos
+end
+ 
+function moveship()
+-- ship.pos.x += cos(ship.rot)*1
+-- ship.pos.y += sin(ship.rot)*1
+ --speed*=friction
+ if btn(2) then
+  thrust()
+ end
+ 
+ ship.pos = movepointbyvelocity(ship)
  ship.pos.x%=(128) 
  ship.pos.y%=(128)
+end
+function randommoveship()
  if t%(flr(rnd(10)+20))==0 then
   speed = rnd(7)
   if t%2==0 then 
@@ -83,12 +143,21 @@ function _update()
   end
  end
 end
+function _update()
+ t+=1
+ checkbuttons()
+ moveship()
+end
  
-
+vec1={speed=1,direction=.5}
+vec2={speed=5,direction=.1}
+newvec=addvectors(vec1,vec2)
 function _draw()
  cls()
  drawshape(ship)
 -- line(target.x,target.y,target.x,targemt.y+10)
+ print(newvec.speed,60,60)
+ print(newvec.direction,60,70)
 rect(0,0,127,127,3)
 end
 
