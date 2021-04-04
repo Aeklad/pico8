@@ -5,11 +5,18 @@ statestart=0
 stateplay=10
 stateend=20
 gamestate=statestart
+screen_max_x=128
+screen_max_y=128
+numasteriods = 10
+asteroidnumpoints =12 
+asteroidrad=8
+asteroidradplus =6 
+asteroidradminus=3
+asteroidmaxvel=.5
+asteroidminvel=.1
+asteroidmaxrot=.005
+asteroids = {}
 
-t=0
-x=0
-y=0
-friction =.9
 ship = {
  pos = {
   x=40,
@@ -20,18 +27,124 @@ ship = {
   direction =0
  },
  acc=0.05,
+ dec=0.001,
  rotspeed = .03,
  rot = 0,
- col = 4,
+ col = 6,
   points = {
-   {x=4,y=0},
-   {x=-4,y=3},
-   {x=-2,y=0},
-   {x=-4,y=-3},
-   {x=4,y=0}
-},
+   {x=2,y=0},
+   {x=-2,y=1},
+   {x=-1,y=0},
+   {x=-2,y=-1},
+   {x=2,y=0}
+ },
 }
-testpoint = {x=5,y=10}
+function initgame()
+ generateasteroids()
+end
+          --points = {
+          --{x=0,y=0},
+          --{x=3,y=2},
+          --{x=2,y=4},
+          --{x=0,y=6},
+          --{x=-3,y=6},
+          --{x=-5,y=4},
+          --{x=-5,y=2},
+          --{x=-4,y=0},
+          --{x=0,y=0}
+
+          --{x=0,y=0},
+          --{x=1,y=10},
+          --{x=4,y=10},
+          --{x=11,y=3},
+          --{x=3,y=-10},
+          --{x=-5,y=-10},
+          --{x=-11,y=-4},
+          --{x=-4,y=0},
+          --{x=-10,y=3},
+          --{x=-4,y=9},
+          --{x=0,y=0}
+function spawnasteroid()
+ local asteroid = {
+        pos = {
+         x=0,
+         y=0
+        },
+        vel= {
+         speed =0,
+         direction =0
+        },
+        acc=0.05,
+        dec=0.001,
+        rotspeed = .01,
+        rot =0 ,
+        col = 6,
+         points = {}
+}
+add(asteroid.points,
+{
+ x= asteroidrad,
+ y= 0
+}
+)
+local angle = 0
+local radius= 0
+local vector = {}
+
+for point=1, (asteroidnumpoints -1) do
+
+ radius = (asteroidrad-asteroidradminus)+rnd(asteroidradplus)
+ 
+ angle =(1/asteroidnumpoints)*point
+ vector = {
+  speed= radius,
+  direction=angle
+ }
+
+ components=getvectorcomp(vector)
+ add(asteroid.points,
+ {
+  x=components.xcomp,
+  y=components.ycomp
+ }
+)
+end
+ 
+add(asteroid.points,
+{
+ x= asteroidrad,
+ y= 0
+}
+)
+ return asteroid
+end
+function generateasteroids()
+ local asteroid 
+ for count = 1, numasteriods do
+  asteroid = spawnasteroid()
+  asteroid.vel = {
+   speed= (rnd()*(asteroidmaxvel-asteroidminvel))+asteroidminvel,
+   direction = rnd()*1
+  }
+  asteroid.rotspeed=(rnd()*(2*asteroidmaxrot))-asteroidmaxrot
+  if count <(numasteriods/2) then
+   asteroid.pos.x=rnd(screen_max_x-1)
+   asteroid.pos.y=0
+  else
+   asteroid.pos.y=rnd(screen_max_y-1)
+   asteroid.pos.x=0
+  end
+
+  add(asteroids,asteroid)
+ end
+end
+function drawasteroids()
+ for index, asteroid in ipairs(asteroids) do
+  drawshape(asteroid)
+ end
+end
+ 
+
 function rotatepoint(point,rotation)
  rotatedpoint ={
  x=
@@ -130,35 +243,49 @@ function moveship()
  if btn(2) then
   thrust()
  end
+ ship.vel.speed -= ship.dec
+ if ship.vel.speed < 0 then ship.vel.speed =0 end
  
  ship.pos = movepointbyvelocity(ship)
- ship.pos.x%=(128) 
- ship.pos.y%=(128)
+ wrapposition(ship)
+ 
+end
+function moveasteroid()
+ for index, asteroid in ipairs(asteroids) do
+  asteroid.pos=movepointbyvelocity(asteroid)
+  asteroid.rot+=asteroid.rotspeed
+  wrapposition(asteroid)
+ end
+end
+function wrapposition(object)
+ object.pos.x%=(screen_max_x)
+ object.pos.y%=(screen_max_y)
 end
 function randommoveship()
+ local t=0
+ t+=1
  if t%(flr(rnd(10)+20))==0 then
   speed = rnd(7)
   if t%2==0 then 
    ship.rot=rnd(1)
   end
  end
-end
-function _update()
- t+=1
  checkbuttons()
  moveship()
 end
+initgame()
+function _update()
+ moveship()
+ checkbuttons()
+ moveasteroid()
+end
  
-vec1={speed=1,direction=.5}
-vec2={speed=5,direction=.1}
-newvec=addvectors(vec1,vec2)
 function _draw()
  cls()
  drawshape(ship)
+ drawasteroids()
 -- line(target.x,target.y,target.x,targemt.y+10)
- print(newvec.speed,60,60)
- print(newvec.direction,60,70)
-rect(0,0,127,127,3)
+--rect(0,0,127,127,3)
 end
 
 __gfx__
