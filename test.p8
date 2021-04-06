@@ -67,15 +67,17 @@ function spawnbullet()
 return bullet
 end
 
-function generatebullet()
+function fireplayerbullet()
  local bullet 
-  bullet = spawnbullet()
-  bullet.time=playerbullettime 
-  bullet.pos.x=ship.pos.x
-  bullet.pos.y=ship.pos.y
-  bullet.vel.speed=playerbulletspeed
-  bullet.vel.direction=ship.rot
-  add(playerbullets,bullet)
+ if #playerbullets < maxplayerbullets then
+   bullet = spawnbullet()
+   bullet.time=playerbullettime 
+   bullet.pos.x=ship.pos.x
+   bullet.pos.y=ship.pos.y
+   bullet.vel.speed=playerbulletspeed
+   bullet.vel.direction=ship.rot
+   add(playerbullets,bullet)
+  end
 end
 
 function spawnasteroid()
@@ -132,6 +134,7 @@ add(asteroid.points,
 )
  return asteroid
 end
+
 function generateasteroids()
  local asteroid 
  for count = 1, numasteriods do
@@ -152,6 +155,7 @@ function generateasteroids()
   add(asteroids,asteroid)
  end
 end
+
 function drawasteroids()
  for index, asteroid in ipairs(asteroids) do
   drawshape(asteroid)
@@ -163,17 +167,7 @@ function drawbullets()
   pset(bullet.pos.x,bullet.pos.y,bullet.col)
  end
 end
- 
-function rotatepoint(point,rotation)
- rotatedpoint ={
- x=
- (point.x*cos(rotation))-(point.y*sin(rotation)),
- y =
- (point.y*cos(rotation))+(point.x*sin(rotation))
- }
- return rotatedpoint
-end
- 
+
 function drawshape(shape)
  local firstpoint = true
  local rotatedpoint = 0
@@ -194,6 +188,16 @@ function drawshape(shape)
  end
 end
 
+function rotatepoint(point,rotation)
+ rotatedpoint ={
+ x=
+ (point.x*cos(rotation))-(point.y*sin(rotation)),
+ y =
+ (point.y*cos(rotation))+(point.x*sin(rotation))
+ }
+ return rotatedpoint
+end
+ 
 function range(range)
  if range > 1 then
   range-=1
@@ -203,26 +207,25 @@ function range(range)
  end
  return range
 end
-function checkbuttons()
- local adjrot=0
- -- thrust if btn(2) then speed+=.4 end
- if btn(0) then ship.rot+=ship.rotspeed end
- if btn(1) then ship.rot-=ship.rotspeed end
- ship.rot=range(ship.rot)
- if btnp(4) then 
-  if  #playerbullets < maxplayerbullets then
-   generatebullet()
-  end
- end
-end
+
 function thrust()
  local acc = {
   speed = ship.acc,
   direction = ship.rot
  }
- --check addvectors function
  ship.vel=addvectors(ship.vel,acc)
 end
+
+function checkbuttons()
+ if btn(0) then ship.rot+=ship.rotspeed end
+ if btn(1) then ship.rot-=ship.rotspeed end
+ if btn(2) then thrust() end
+ ship.rot=range(ship.rot)
+ if btnp(4) then 
+  fireplayerbullet()
+ end
+end
+
 function addvectors(vector1,vector2)
  v1comp = getvectorcomp(vector1)
  v2comp = getvectorcomp(vector2)
@@ -241,7 +244,7 @@ function getvectorcomp(vector)
  }
  return components
 end
-testvector=getvectorcomp(ship.vel)
+
 function comptovector(x,y)
  local magnitude = sqrt((x*x)+(y*y))
  local direction = atan2(x,y)
@@ -252,6 +255,7 @@ function comptovector(x,y)
  }
  return vector
 end
+
 function movepointbyvelocity(object)
  comp = getvectorcomp(object.vel)
  local newpos= {
@@ -262,12 +266,6 @@ function movepointbyvelocity(object)
 end
  
 function moveship()
--- ship.pos.x += cos(ship.rot)*1
--- ship.pos.y += sin(ship.rot)*1
- --speed*=friction
- if btn(2) then
-  thrust()
- end
  ship.vel.speed -= ship.dec
  if ship.vel.speed < 0 then ship.vel.speed =0 end
  
@@ -286,17 +284,48 @@ end
 function movebullet()
  for index, bullet in ipairs(playerbullets) do
   bullet.time -=1
-  bullet.pos=movepointbyvelocity(bullet)
-  wrapposition(bullet)
-  if bullet.time <= 0 then
+  if bullet.time < 0 then
    del(playerbullets,bullet)
   end
+  bullet.pos=movepointbyvelocity(bullet)
+  wrapposition(bullet)
  end
 end
 
 function wrapposition(object)
  object.pos.x%=(screen_max_x)
  object.pos.y%=(screen_max_y)
+end
+
+function checkseparation (p1,p2,sep)
+ local sepsq = sep*sep
+ local dsq = 
+       ((p1.y-p2.y)*(p1.y-p2.y))+
+       ((p1.x-p2.x)*(p1.x-p2.x))
+ return (dsq<=sepsq)
+end
+
+function explodeasteroid(index,asteroid)
+ deli(asteroids,index)
+end
+
+
+function checkbullethits()
+ local x,y,x1,y1
+ for bindex, bullet in ipairs(playerbullets) do
+  x=bullet.pos.x
+  y=bullet.pos.y
+  for aindex, asteroid in ipairs(asteroids) do
+   x1=asteroid.pos.x
+   y1=asteroid.pos.y
+   if checkseparation(bullet.pos,asteroid.pos,asteroidrad+asteroidradplus) then
+   --d = sqrt((x1-x)*(x1-x)+(y1-y)*(y1-y))
+   --if d < components.xcomp then
+     explodeasteroid(aindex,asteroid)
+     del(playerbullets,bullet)
+   end
+  end
+ end
 end
 
 function randommoveship()
@@ -319,15 +348,17 @@ function _update()
  checkbuttons()
  moveasteroid()
  movebullet()
+ checkbullethits()
+ if #asteroids <1 then
+  initgame()
+ end
 end
  
 function _draw()
  cls()
  drawshape(ship)
- drawasteroids()
  drawbullets()
--- line(target.x,target.y,target.x,targemt.y+10)
---rect(0,0,127,127,3)
+ drawasteroids()
 end
 
 __gfx__
