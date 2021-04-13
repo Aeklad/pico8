@@ -16,6 +16,7 @@ asteroidmaxvel=.5
 asteroidminvel=.1
 asteroidmaxrot=.005
 asteroids = {}
+debug = {}
 
 ship = {
  pos = {
@@ -53,6 +54,7 @@ end
 
 function spawnbullet()
  local bullet = {
+        alive = true,
         time = 0,
         pos = {
          x=0,
@@ -81,7 +83,7 @@ function fireplayerbullet()
   end
 end
 
-function spawnasteroid()
+function spawnasteroid(scale)
  local asteroid = {
         pos = {
          x=0,
@@ -96,11 +98,13 @@ function spawnasteroid()
         rotspeed = .01,
         rot =0 ,
         col = 6,
+        scale = scale,
+        radius = (asteroidrad + asteroidradplus)/scale,
          points = {}
  }
  add(asteroid.points,
  {
-  x= asteroidrad,
+  x= asteroidrad/scale,
   y= 0
  }
  )
@@ -110,7 +114,7 @@ function spawnasteroid()
 
  for point=1, (asteroidnumpoints -1) do
 
-  radius = (asteroidrad-asteroidradminus)+rnd(asteroidradplus)
+  radius = ((asteroidrad-asteroidradminus)+rnd(asteroidradplus))/scale
   
   angle =(1/asteroidnumpoints)*point
   vector = {
@@ -129,7 +133,7 @@ end
  
 add(asteroid.points,
 {
- x= asteroidrad,
+ x= asteroidrad/scale,
  y= 0
 }
 )
@@ -139,7 +143,7 @@ end
 function generateasteroids()
  local asteroid 
  for count = 1, numasteriods do
-  asteroid = spawnasteroid()
+  asteroid = spawnasteroid(1)
   asteroid.vel = {
    speed= (rnd()*(asteroidmaxvel-asteroidminvel))+asteroidminvel,
    direction = rnd()*1
@@ -152,7 +156,6 @@ function generateasteroids()
    asteroid.pos.y=rnd(screen_max_y-1)
    asteroid.pos.x=0
   end
-
   add(asteroids,asteroid)
  end
 end
@@ -186,6 +189,64 @@ function drawshape(shape)
    shape.col)
    lastpoint=rotatedpoint
   end
+ end
+end
+
+function pointinpolygon(point, shape)
+ local firstpoint = true
+ local lastpoint =0
+ local rotatedpoint = 0
+ local onright = 0
+ local onleft = 0 
+ local xcrossing = 0
+ for k, shapepoint in ipairs(shape.points) do 
+  rotatedpoint=rotatepoint(shapepoint,shape.rot)
+  if firstpoint then
+   lastpoint = rotatedpoint
+   firstpoint= false
+  else
+   startpoint = {
+    x=lastpoint.x + shape.pos.x,
+    y=lastpoint.y + shape.pos.y,
+   }
+  endpoint = {
+    x=rotatedpoint.x+shape.pos.x,
+    y=rotatedpoint.y+shape.pos.y,
+   }
+   if ((startpoint.y >= point.y)and (endpoint.y < point.y))
+    or ((startpoint.y < point.y) and (endpoint.y >=point.y)) then
+    -- line crosses ray
+    if (startpoint.x <= point.x) and (endpoint.x <= point.x) then
+     -- line is to left
+     onleft +=1 
+    elseif (startpoint.x >= point.x) and (endpoint.x >= point.x) then
+     -- line is to right
+     onright+=1
+    else
+     -- need to calculate crossing x coordinate
+     if (startpoint.y != endpoint.y) then
+      -- filter out horizontal line
+      xcrossing = startpoint.x +
+      ((point.y - startpoint.y)
+      *(endpoint.x - startpoint.x)
+      /(endpoint.y - startpoint.y))
+      if (xcrossing >- point.x) then
+       onright +=1
+      else
+       onleft +=1
+      end
+     end
+    end
+   end
+   lastpoint = rotatedpoint
+  end
+ end
+ -- check if inside
+ if (onright % 2)==1 then
+  -- odd = inside
+  return true
+ else
+  return false
  end
 end
 
@@ -225,6 +286,7 @@ function checkbuttons()
  if btn(2) then thrust() end
  ship.rot=range(ship.rot)
  if btnp(4) then 
+  s=true
   fireplayerbullet()
  end
 end
@@ -309,24 +371,34 @@ function checkseparation (p1,p2,sep)
 end
 
 function explodeasteroid(index,asteroid)
+ local pos=asteroid.pos
+ local orgscale = asteroid.scale
  deli(asteroids,index)
+ local newscale = orgscale*2 
  sfx(1)
+ local asteroid 
+ for count = 1, 2 do
+  asteroid = spawnasteroid(newscale)
+  asteroid.vel = {
+   speed= (rnd()*(asteroidmaxvel-asteroidminvel))+asteroidminvel,
+   direction = rnd()*1
+  }
+  asteroid.rotspeed=(rnd()*(2*asteroidmaxrot))-asteroidmaxrot
+  asteroid.pos=pos
+  debug[1]=newscale
+  add(asteroids,asteroid)
+ end
 end
 
-
 function checkbullethits()
- local x,y,x1,y1
  for bindex, bullet in ipairs(playerbullets) do
-  x=bullet.pos.x
-  y=bullet.pos.y
   for aindex, asteroid in ipairs(asteroids) do
-   x1=asteroid.pos.x
-   y1=asteroid.pos.y
    if checkseparation(bullet.pos,asteroid.pos,asteroidrad+asteroidradplus) then
-   --d = sqrt((x1-x)*(x1-x)+(y1-y)*(y1-y))
-   --if d < components.xcomp then
-     explodeasteroid(aindex,asteroid)
-     del(playerbullets,bullet)
+    if pointinpolygon(bullet.pos,asteroid) then
+      deli(playerbullets,bindex)
+      explodeasteroid(aindex,asteroid)
+      break
+     end
    end
   end
  end
@@ -363,6 +435,9 @@ function _draw()
  drawshape(ship)
  drawbullets()
  drawasteroids()
+ for txt in all(debug) do
+  print(txt)
+ end
 end
 
 
