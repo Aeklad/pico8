@@ -17,6 +17,7 @@ asteroidminvel=.1
 asteroidmaxrot=.005
 asteroids = {}
 debug = {}
+score = 0
 
 ship = {
  pos = {
@@ -51,6 +52,7 @@ playerbulletoffset = {
 function initgame()
  generateasteroids()
 end
+
 
 function spawnbullet()
  local bullet = {
@@ -164,6 +166,10 @@ function drawasteroids()
  for index, asteroid in ipairs(asteroids) do
   drawshape(asteroid)
  end
+end
+
+function drawgameinfo()
+ print("score : "..score)
 end
 
 function drawbullets()
@@ -376,18 +382,22 @@ function explodeasteroid(index,asteroid)
  deli(asteroids,index)
  local newscale = orgscale*2 
  sfx(1)
- local asteroid 
- for count = 1, 2 do
-  asteroid = spawnasteroid(newscale)
-  asteroid.vel = {
-   speed= (rnd()*(asteroidmaxvel-asteroidminvel))+asteroidminvel,
-   direction = rnd()*1
-  }
-  asteroid.rotspeed=(rnd()*(2*asteroidmaxrot))-asteroidmaxrot
-  asteroid.pos=pos
-  debug[1]=newscale
-  add(asteroids,asteroid)
+ if orgscale < 4 then
+  local asteroid 
+  for count = 1, 2 do
+   asteroid = spawnasteroid(newscale)
+   asteroid.vel = {
+    speed= (rnd()*(asteroidmaxvel-asteroidminvel))+asteroidminvel,
+    direction = rnd()*1
+   }
+   asteroid.rotspeed=(rnd()*(2*asteroidmaxrot))-asteroidmaxrot
+   asteroid.pos=pos
+   add(asteroids,asteroid)
+  end
  end
+end
+
+function updatescore()
 end
 
 function checkbullethits()
@@ -397,6 +407,7 @@ function checkbullethits()
     if pointinpolygon(bullet.pos,asteroid) then
       deli(playerbullets,bindex)
       explodeasteroid(aindex,asteroid)
+      score=score+(50*asteroid.scale)
       break
      end
    end
@@ -435,6 +446,7 @@ function _draw()
  drawshape(ship)
  drawbullets()
  drawasteroids()
+ drawgameinfo()
  for txt in all(debug) do
   print(txt)
  end
