@@ -266,6 +266,32 @@ function rotatepoint(point,rotation)
  return rotatedpoint
 end
  
+function polygoninpolygon(shape1,shape2)
+ local testpoint = {}
+ local rotatedpoint = {}
+ for index,point in ipairs(shape1.points) do
+  rotatedpoint= rotatepoint(point,shape1.rotation)
+  testpoint= {
+   x = rotatedpoint.x + shape1.pos.x,
+   y= rotatedpoint.y + shape1.pos.y
+  }
+  if pointinpolygon(testpoint,shape2) then
+   return true
+  end
+ end
+ for index,point in ipairs(shape2.points) do
+  rotatedpoint= rotatepoint(point,shape2.rotation)
+  testpoint= {
+   x = rotatedpoint.x + shape1.pos.x,
+   y= rotatedpoint.y + shape1.pos.y
+  }
+  if pointinpolygon(testpoint,shape1) then
+   return true
+  end
+ end
+ return false
+end
+ 
 function range(range)
  if range > 1 then
   range-=1
@@ -400,6 +426,18 @@ end
 function updatescore()
 end
 
+function checkshiphits()
+ for aindex, asteroid in ipairs(asteroids) do
+  if checkseparation(ship.pos,asteroid.pos,asteroidrad+asteroidradplus) then
+   if polygoninpolygon(ship,asteroid) then
+    explodeasteroid(aindex,asteroid)
+    score=score+(50*asteroid.scale)
+    break
+   end
+  end
+ end
+end
+
 function checkbullethits()
  for bindex, bullet in ipairs(playerbullets) do
   for aindex, asteroid in ipairs(asteroids) do
@@ -436,6 +474,7 @@ function _update()
  moveasteroid()
  movebullet()
  checkbullethits()
+ checkshiphits()
  if #asteroids <1 then
   initgame()
  end
