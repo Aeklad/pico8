@@ -4,7 +4,7 @@ __lua__
 statestart=0
 stateplay=10
 stateend=20
-gamestate=statestart
+gamestate=state_init
 screen_max_x=128
 screen_max_y=128
 numasteriods = 10
@@ -15,33 +15,11 @@ asteroidradminus=3
 asteroidmaxvel=.5
 asteroidminvel=.1
 asteroidmaxrot=.005
-asteroids = {}
+playerlives=0
+delaytimer=0
 debug = {}
 score = 0
 
-ship = {
- pos = {
-  x=40,
-  y=60
- },
- vel= {
-  speed =0,
-  direction =0
- },
- acc=0.05,
- dec=0.001,
- rotspeed = .03,
- rot = 0,
- col = 6,
-  points = {
-   {x=2,y=0},
-   {x=-2,y=1},
-   {x=-1,y=0},
-   {x=-2,y=-1},
-   {x=2,y=0}
- },
-}
-playerbullets = {}
 maxplayerbullets=4
 playerbulletspeed=2
 playerbullettime=60
@@ -49,8 +27,37 @@ playerbulletoffset = {
  x=2,
  y=0
 }
+
 function initgame()
+ score=0
+ asteroids = {}
+ playerbullets = {}
+ playerlives=3
  generateasteroids()
+
+ ship = {
+  pos = {
+   x=60,
+   y=60
+  },
+  vel= {
+   speed =0,
+   direction =0
+  },
+  acc=0.05,
+  dec=0.001,
+  rotspeed = .03,
+  rot = 0,
+  col = 6,
+   points = {
+    {x=2,y=0},
+    {x=-2,y=1},
+    {x=-1,y=0},
+    {x=-2,y=-1},
+    {x=2,y=0}
+  },
+ }
+
 end
 
 
@@ -162,6 +169,14 @@ function generateasteroids()
  end
 end
 
+function drawlives(x,y,width,length)
+ for i=1, playerlives do
+  line(x+i*6,y,(x+width)+i*6,y+length)
+  line(x+i*6,y,(x-width)+i*6,y+length)
+ end
+end
+
+
 function drawasteroids()
  for index, asteroid in ipairs(asteroids) do
   drawshape(asteroid)
@@ -169,6 +184,7 @@ function drawasteroids()
 end
 
 function drawgameinfo()
+ drawlives(100,0,1,3)
  print("score : "..score)
 end
 
@@ -432,6 +448,7 @@ function checkshiphits()
    if polygoninpolygon(ship,asteroid) then
     explodeasteroid(aindex,asteroid)
     score=score+(50*asteroid.scale)
+    gamestate=stateend
     break
    end
   end
@@ -466,9 +483,15 @@ function randommoveship()
  moveship()
 end
 
-initgame()
+function dostartscreen()
+ print("asteroids", 60,60)
+ print("press z to start", 40,80)
+ if btnp(4) then
+  gamestate=stateplay
+ end
+end
 
-function _update()
+function doplaygame()
  moveship()
  checkbuttons()
  moveasteroid()
@@ -479,16 +502,44 @@ function _update()
   initgame()
  end
 end
+
+function doendscreen()
+ print("game over", 60,60)
+ print("press z to start", 40,80)
+ if btnp(4) then
+  gamestate=state_init
+ end
+end
+
+
+function _update()
+ cls()
+ if gamestate == state_init then
+  initgame()
+  gamestate = statestart 
+ elseif gamestate == statestart then
+  dostartscreen()
+ elseif gamestate == stateplay then
+  doplaygame()
+ elseif gamestate == stateshipkilled then
+  doshipkilled()
+ elseif gamestate == statshipkilldelay then
+  doshipkilldelay()
+ elseif gamestate == stateend then
+   doendscreen()
+ end
+end
  
 function _draw()
- cls()
- drawshape(ship)
- drawbullets()
- drawasteroids()
- drawgameinfo()
- for txt in all(debug) do
-  print(txt)
+ if gamestate == stateplay then
+  drawshape(ship)
+  drawbullets()
+  drawasteroids()
+  drawgameinfo()
  end
+  for txt in all(debug) do
+   print(txt)
+  end
 end
 
 
