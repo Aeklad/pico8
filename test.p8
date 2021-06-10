@@ -7,7 +7,7 @@ stateend=20
 gamestate=state_init
 screen_max_x=128
 screen_max_y=128
-numasteriods = 10
+numasteriods = 4
 asteroidnumpoints =12 
 asteroidrad=8
 asteroidradplus =6 
@@ -32,7 +32,7 @@ function initgame()
  score=0
  asteroids = {}
  playerbullets = {}
- playerlives=3
+ playerlives=0
  generateasteroids()
 
  ship = {
@@ -47,6 +47,7 @@ function initgame()
   acc=0.05,
   dec=0.001,
   rotspeed = .03,
+  radius = 10,
   rot = 0,
   col = 6,
    points = {
@@ -95,57 +96,78 @@ end
 function spawnasteroid(scale)
  local asteroid = {
         pos = {
-         x=0,
-         y=0
+         x=60,
+         y=20
         },
         vel= {
          speed =0,
          direction =0
         },
-        acc=0.05,
-        dec=0.001,
-        rotspeed = .01,
+        acc=0, --0.05,
+        dec=0, --0.001,
+        rotspeed = 0,--.01,
         rot =0 ,
         col = 6,
         scale = scale,
         radius = (asteroidrad + asteroidradplus)/scale,
-         points = {}
- }
- add(asteroid.points,
- {
-  x= asteroidrad/scale,
-  y= 0
- }
- )
- local angle = 0
- local radius= 0
- local vector = {}
+   points = {
+    {x=0,y=0},
+    {x=4,y=6},
+    {x=4,y=0},
+    {x=8,y=0},
+    {x=8,y=2},
+    {x=6,y=2},
+    {x=10,y=6},
+    {x=10,y=0},
+    {x=10,y=2},
+    {x=16,y=0},
+    {x=10,y=2},
+    {x=16,y=6},
+    {x=-16,y=6},
+    {x=-12,y=0},
+    {x=-10,y=4},
+    {x=-8,y=0},
+    {x=-4,y=6},
+    {x=-2,y=4},
+    {x=2,y=4},
+    {x=0,y=0}
+    }
+   }
+ --add(asteroid.points,
+-- {
+ -- x= asteroidrad/scale,
+  --y= 0
+ --}
+ --)
+ --local angle = 0
+ --local radius= 0
+ --local vector = {}
 
- for point=1, (asteroidnumpoints -1) do
+ --for point=1, (asteroidnumpoints -1) do
 
-  radius = ((asteroidrad-asteroidradminus)+rnd(asteroidradplus))/scale
+  --radius = ((asteroidrad-asteroidradminus)+rnd(asteroidradplus))/scale
   
-  angle =(1/asteroidnumpoints)*point
-  vector = {
-   speed= radius,
-   direction=angle
-  }
+  --angle =(1/asteroidnumpoints)*point
+  --vector = {
+  -- speed= radius,
+  -- direction=angle
+ -- }
 
-  components=getvectorcomp(vector)
-  add(asteroid.points,
-  {
-   x=components.xcomp,
-   y=components.ycomp
-  }
- )
-end
+  --components=getvectorcomp(vector)
+  --add(asteroid.points,
+ -- {
+  -- x=components.xcomp,
+   --y=components.ycomp
+ -- }
+ --)
+--end
  
-add(asteroid.points,
-{
- x= asteroidrad/scale,
- y= 0
-}
-)
+--add(asteroid.points,
+--{
+-- x= asteroidrad/scale,
+-- y= 0
+--}
+--)
  return asteroid
 end
 
@@ -154,12 +176,12 @@ function generateasteroids()
  for count = 1, numasteriods do
   asteroid = spawnasteroid(1)
   asteroid.vel = {
-   speed= (rnd()*(asteroidmaxvel-asteroidminvel))+asteroidminvel,
+   speed=  (rnd()*(asteroidmaxvel-asteroidminvel))+asteroidminvel,
    direction = rnd()*1
   }
-  asteroid.rotspeed=(rnd()*(2*asteroidmaxrot))-asteroidmaxrot
+  asteroid.rotspeed= (rnd()*(2*asteroidmaxrot))-asteroidmaxrot
   if count <(numasteriods/2) then
-   asteroid.pos.x=rnd(screen_max_x-1)
+   asteroid.pos.x= rnd(screen_max_x-1)
    asteroid.pos.y=0
   else
    asteroid.pos.y=rnd(screen_max_y-1)
@@ -306,6 +328,36 @@ function polygoninpolygon(shape1,shape2)
   end
  end
  return false
+end
+
+function newfangledpolygoninpolygon(shape1,shape2)
+ local collisiondetected = false
+ if(checkseparation(shape1.pos,
+                    shape2.pos,
+                    shape1.radius + shape2.radius)) then
+                     
+ for index,point in ipairs(shape1.points) do
+  if pointinpolygon(point,shape2) then
+   collisiondetected=true
+   break
+  end
+ end
+ if collisiondetected then
+  return true
+ end
+ for index,point in ipairs(shape2.points) do
+  --debug[1]=collisiondetected
+  if pointinpolygon(point,shape1) then
+   collisiondetected = true
+   break
+  end
+ end
+  if collisiondetected then
+   return true
+  else
+   return false
+  end
+ end
 end
  
 function range(range)
@@ -484,7 +536,7 @@ function randommoveship()
 end
 
 function dostartscreen()
- print("asteroids", 60,60)
+ print("marksteroids", 45,60)
  print("press z to start", 40,80)
  if btnp(4) then
   gamestate=stateplay
@@ -538,7 +590,7 @@ function _draw()
   drawgameinfo()
  end
   for txt in all(debug) do
-   print(txt)
+   print(txt,60,60,8)
   end
 end
 
