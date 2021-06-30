@@ -1,15 +1,19 @@
 pico-8 cartridge // http://www.pico-8.com
 version 32
 __lua__
+poke4(0x5f10,0x8382.8180)
+poke4(0x5f14,0x8786.8584)
+poke4(0x5f18,0x8b8a.8988)
+poke4(0x5f1c,0x8f8e.8d8c)
 statestart=0
 stateplay=10
 stateend=20
 gamestate=state_init
 screen_max_x=128
 screen_max_y=128
-numasteriods = 4
+numasteriods = 6
 asteroidnumpoints =12 
-asteroidrad=8
+asteroidrad=10
 asteroidradplus =6 
 asteroidradminus=3
 asteroidmaxvel=.5
@@ -103,9 +107,9 @@ function spawnasteroid(scale)
          speed =0,
          direction =0
         },
-        acc=0, --0.05,
-        dec=0, --0.001,
-        rotspeed = 0,--.01,
+        acc=.05,
+        dec=.001,
+        rotspeed = .01,
         rot =0 ,
         col = 6,
         scale = scale,
@@ -136,7 +140,6 @@ function spawnasteroid(scale)
   }
  )
 end
- 
 add(asteroid.points,
 {
  x= asteroidrad/scale,
@@ -249,7 +252,7 @@ function pointinpolygon(point, shape)
       ((point.y - startpoint.y)
       *(endpoint.x - startpoint.x)
       /(endpoint.y - startpoint.y))
-      if (xcrossing >- point.x) then
+      if (xcrossing >= point.x) then
        onright +=1
       else
        onleft +=1
@@ -451,7 +454,7 @@ function explodeasteroid(index,asteroid)
  deli(asteroids,index)
  local newscale = orgscale*2 
  sfx(1)
- if orgscale < 4 then
+ if orgscale < 3 then
   local asteroid 
   for count = 1, 2 do
    asteroid = spawnasteroid(newscale)
@@ -462,6 +465,7 @@ function explodeasteroid(index,asteroid)
    asteroid.rotspeed=(rnd()*(2*asteroidmaxrot))-asteroidmaxrot
    asteroid.pos=pos
    add(asteroids,asteroid)
+   --debug[1]=orgscale
   end
  end
 end
@@ -471,7 +475,7 @@ end
 
 function checkshiphits()
  for aindex, asteroid in ipairs(asteroids) do
-  if checkseparation(ship.pos,asteroid.pos,asteroidrad+asteroidradplus) then
+  if checkseparation(ship.pos,asteroid.pos,asteroid.radius) then --asteroidrad+asteroidradplus) then
    if polygoninpolygon(ship,asteroid) then
     explodeasteroid(aindex,asteroid)
     score=score+(50*asteroid.scale)
@@ -485,7 +489,7 @@ end
 function checkbullethits()
  for bindex, bullet in ipairs(playerbullets) do
   for aindex, asteroid in ipairs(asteroids) do
-   if checkseparation(bullet.pos,asteroid.pos,asteroidrad+asteroidradplus) then
+   if checkseparation(bullet.pos,asteroid.pos,asteroid.radius) then
     if pointinpolygon(bullet.pos,asteroid) then
       deli(playerbullets,bindex)
       explodeasteroid(aindex,asteroid)
@@ -511,7 +515,7 @@ function randommoveship()
 end
 
 function dostartscreen()
- print("marksteroids", 45,60)
+ print("asteroids", 45,60)
  print("press z to start", 40,80)
  if btnp(4) then
   gamestate=stateplay
@@ -540,7 +544,7 @@ end
 
 
 function _update()
- cls()
+ cls(0)
  if gamestate == state_init then
   initgame()
   gamestate = statestart 
