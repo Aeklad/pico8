@@ -1,10 +1,14 @@
 pico-8 cartridge // http://www.pico-8.com
 version 32
 __lua__
+--***********changes to alternate pallete
 poke4(0x5f10,0x8382.8180)
 poke4(0x5f14,0x8786.8584)
 poke4(0x5f18,0x8b8a.8988)
 poke4(0x5f1c,0x8f8e.8d8c)
+--***********sets button press delay to 100
+poke(0x5f5c,100)
+poke(0x5f5d,100)
 statestart=0
 stateplay=10
 stateend=20
@@ -13,20 +17,20 @@ screen_max_x=128
 screen_max_y=128
 numasteriods = 6
 asteroidnumpoints =12 
-asteroidrad=10
-asteroidradplus =6 
-asteroidradminus=3
-asteroidmaxvel=.5
-asteroidminvel=.1
+asteroidrad=12
+asteroidradplus =7 
+asteroidradminus=4
+asteroidmaxvel=.25
+asteroidminvel=.05
 asteroidmaxrot=.005
-playerlives=0
+playerlives=3
 delaytimer=0
 debug = {}
 score = 0
 
 maxplayerbullets=4
-playerbulletspeed=2
-playerbullettime=60
+playerbulletspeed=1
+playerbullettime=100
 playerbulletoffset = {
  x=2,
  y=0
@@ -36,7 +40,7 @@ function initgame()
  score=0
  asteroids = {}
  playerbullets = {}
- playerlives=0
+ playerlives=3
  generateasteroids()
 
  ship = {
@@ -48,9 +52,9 @@ function initgame()
    speed =0,
    direction =0
   },
-  acc=0.05,
-  dec=0.001,
-  rotspeed = .03,
+  acc=0.015,
+  dec=0.0005,
+  rotspeed = .02,
   radius = 10,
   rot = 0,
   col = 6,
@@ -307,36 +311,6 @@ function polygoninpolygon(shape1,shape2)
  end
  return false
 end
-
-function newfangledpolygoninpolygon(shape1,shape2)
- local collisiondetected = false
- if(checkseparation(shape1.pos,
-                    shape2.pos,
-                    shape1.radius + shape2.radius)) then
-                     
- for index,point in ipairs(shape1.points) do
-  if pointinpolygon(point,shape2) then
-   collisiondetected=true
-   break
-  end
- end
- if collisiondetected then
-  return true
- end
- for index,point in ipairs(shape2.points) do
-  --debug[1]=collisiondetected
-  if pointinpolygon(point,shape1) then
-   collisiondetected = true
-   break
-  end
- end
-  if collisiondetected then
-   return true
-  else
-   return false
-  end
- end
-end
  
 function range(range)
  if range > 1 then
@@ -453,13 +427,14 @@ function explodeasteroid(index,asteroid)
  local orgscale = asteroid.scale
  deli(asteroids,index)
  local newscale = orgscale*2 
+ local newspeed =orgscale*1.5
  sfx(1)
  if orgscale < 3 then
   local asteroid 
   for count = 1, 2 do
    asteroid = spawnasteroid(newscale)
    asteroid.vel = {
-    speed= (rnd()*(asteroidmaxvel-asteroidminvel))+asteroidminvel,
+    speed= ((rnd()*(asteroidmaxvel-asteroidminvel))+asteroidminvel)*newspeed,
     direction = rnd()*1
    }
    asteroid.rotspeed=(rnd()*(2*asteroidmaxrot))-asteroidmaxrot
@@ -479,7 +454,7 @@ function checkshiphits()
    if polygoninpolygon(ship,asteroid) then
     explodeasteroid(aindex,asteroid)
     score=score+(50*asteroid.scale)
-    gamestate=stateend
+    playerlives-=1
     break
    end
   end
@@ -543,7 +518,7 @@ function doendscreen()
 end
 
 
-function _update()
+function _update60()
  cls(0)
  if gamestate == state_init then
   initgame()
