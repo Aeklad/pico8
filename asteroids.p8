@@ -9,8 +9,11 @@ poke4(0x5f1c,0x8f8e.8d8c)
 --***********sets button press delay to 100
 poke(0x5f5c,100)
 poke(0x5f5d,100)
+drawgame=true
 statestart=0
 stateplay=10
+stateshipkilled=12
+stateshipkilldelay=15
 stateend=20
 gamestate=state_init
 screen_max_x=128
@@ -455,6 +458,7 @@ function checkshiphits()
     explodeasteroid(aindex,asteroid)
     score=score+(50*asteroid.scale)
     playerlives-=1
+    gamestate=stateshipkilled
     break
    end
   end
@@ -516,35 +520,51 @@ function doendscreen()
   gamestate=state_init
  end
 end
+function doshipkilled()
+ print("killed", 60,60)
+ print("press z to start",60,70)
+ if btnp(4) then
+  gamestate= stateplay
+ end
+end
 
 
 function _update60()
  cls(0)
  if gamestate == state_init then
+  drawgame =false
   initgame()
   gamestate = statestart 
  elseif gamestate == statestart then
   dostartscreen()
  elseif gamestate == stateplay then
+  drawgame= true
   doplaygame()
  elseif gamestate == stateshipkilled then
   doshipkilled()
  elseif gamestate == statshipkilldelay then
   doshipkilldelay()
  elseif gamestate == stateend then
+  drawgame=false
    doendscreen()
  end
+ if playerlives==0 then 
+  gamestate=stateend
+  doendscreen() 
+
+ end
+debug[1]=gamestate
 end
  
 function _draw()
- if gamestate == stateplay then
+ if drawgame then
   drawshape(ship)
   drawbullets()
   drawasteroids()
   drawgameinfo()
  end
   for txt in all(debug) do
-   print(txt,60,60,8)
+   print(txt,10,10,8)
   end
 end
 
