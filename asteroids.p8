@@ -9,16 +9,18 @@ poke4(0x5f1c,0x8f8e.8d8c)
 --***********sets button press delay to 100
 poke(0x5f5c,100)
 poke(0x5f5d,100)
+drawship=true
 drawgame=true
 statestart=0
 stateplay=10
 stateshipkilled=12
 stateshipkilldelay=15
 stateend=20
+statewaitforrespawn=16
 gamestate=state_init
 screen_max_x=128
 screen_max_y=128
-numasteriods = 6
+numasteriods = 10
 asteroidnumpoints =12 
 asteroidrad=12
 asteroidradplus =7 
@@ -30,6 +32,7 @@ playerlives=3
 delaytimer=0
 debug = {}
 score = 0
+respawnpos= {x=60,y=60}
 
 maxplayerbullets=4
 playerbulletspeed=1
@@ -44,8 +47,14 @@ function initgame()
  asteroids = {}
  playerbullets = {}
  playerlives=3
+ resetplayership()
  generateasteroids()
 
+
+end
+
+function resetplayership()
+ drawship=true
  ship = {
   pos = {
    x=60,
@@ -69,9 +78,7 @@ function initgame()
     {x=2,y=0}
   },
  }
-
 end
-
 
 function spawnbullet()
  local bullet = {
@@ -457,7 +464,6 @@ function checkshiphits()
    if polygoninpolygon(ship,asteroid) then
     explodeasteroid(aindex,asteroid)
     score=score+(50*asteroid.scale)
-    playerlives-=1
     gamestate=stateshipkilled
     break
    end
@@ -520,11 +526,40 @@ function doendscreen()
   gamestate=state_init
  end
 end
+
+function doshipkilldelay()
+ moveasteroid()
+ movebullet()
+ checkbullethits()
+ delaytimer-=1
+ if delaytimer==0 then
+  if playerlives == 0 then
+   gamestate= stateend 
+  else
+   gamestate=statewaitforrespawn  
+  end
+ end   
+end
+
 function doshipkilled()
- print("killed", 60,60)
- print("press z to start",60,70)
- if btnp(4) then
-  gamestate= stateplay
+ doplaygame()
+ playerlives-=1
+ sfx(1)
+ delaytimer=60
+ gamestate= stateshipkilldelay
+end
+
+function doshiprespawn()
+ doplaygame()
+ resetplayership()
+ gamestate=stateplay
+
+end
+function checkrespawn()
+ for aindex, asteroid in ipairs(asteroids) do
+  if checkseparation(respawnpos,asteroid.pos,asteroid.radius+10) then --asteroidrad+asteroidradplus) then
+   return true
+  end
  end
 end
 
@@ -538,12 +573,21 @@ function _update60()
  elseif gamestate == statestart then
   dostartscreen()
  elseif gamestate == stateplay then
+  drawship= true
   drawgame= true
   doplaygame()
  elseif gamestate == stateshipkilled then
+  drawship=false
   doshipkilled()
- elseif gamestate == statshipkilldelay then
+ elseif gamestate == stateshipkilldelay then
+  drawship=false
   doshipkilldelay()
+ elseif gamestate== statewaitforrespawn then
+  moveasteroid()
+  movebullet()
+  if not checkrespawn() then
+   doshiprespawn()
+  end
  elseif gamestate == stateend then
   drawgame=false
    doendscreen()
@@ -551,14 +595,14 @@ function _update60()
  if playerlives==0 then 
   gamestate=stateend
   doendscreen() 
-
  end
-debug[1]=gamestate
 end
  
 function _draw()
  if drawgame then
-  drawshape(ship)
+  if drawship then
+   drawshape(ship)
+  end
   drawbullets()
   drawasteroids()
   drawgameinfo()
