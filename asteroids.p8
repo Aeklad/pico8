@@ -30,8 +30,6 @@ asteroidradminus=7
 asteroidmaxvel=.25
 asteroidminvel=.05
 asteroidmaxrot=.005
---particles
-particles = {}
 
 
 
@@ -74,6 +72,8 @@ function _update60()
 end
  
 function _draw()
+ drawparticles()
+ drawshipparts()
  drawtheship()
  drawbullets()
  drawasteroids()
@@ -88,18 +88,21 @@ end
 function checkbuttons()
  if btn(0) then ship.rot+=ship.rotspeed end
  if btn(1) then ship.rot-=ship.rotspeed end
- if btn(2) then thrust() end
+ if btn(2) then 
+  thrust() 
+  return true
+ end
  ship.rot=range(ship.rot)
  if btnp(4) then 
   fireplayerbullet()
  end
 end
 
-function movepointbyvelocity(object)
+function movepointbyvelocity(object,spd)
  comp = getvectorcomp(object.vel)
  local newpos= {
-  x=object.pos.x + comp.xcomp,
-  y=object.pos.y + comp.ycomp
+  x=object.pos.x + (comp.xcomp)/spd,
+  y=object.pos.y + (comp.ycomp)/spd
  }
  return newpos
 end
@@ -108,15 +111,39 @@ function moveship()
  ship.vel.speed -= ship.dec
  if ship.vel.speed < 0 then ship.vel.speed =0 end
  
- ship.pos = movepointbyvelocity(ship)
+ ship.pos = movepointbyvelocity(ship,1)
  wrapposition(ship)
 end
 
+
 function moveasteroid()
  for index, asteroid in ipairs(asteroids) do
-  asteroid.pos=movepointbyvelocity(asteroid)
+  asteroid.pos=movepointbyvelocity(asteroid,1)
   asteroid.rot+=asteroid.rotspeed
   wrapposition(asteroid)
+ end
+end
+
+function moveshipparts()
+ for index, shippart in ipairs(shipparts) do
+  shippart.time -=1
+  if shippart.time<0 then
+   del(shipparts,shippart)
+  end
+  shippart.pos=movepointbyvelocity(shippart,2)
+  shippart.rot+=shippart.rotspeed
+  wrapposition(shippart)
+ end
+end
+
+function moveparticle()
+ for index, particle in ipairs(particles) do
+  particle.time -=1
+  if particle.time <0 then 
+   del(particles,particle)
+  end
+  particle.pos=movepointbyvelocity(particle,1)
+  wrapposition(particle)
  end
 end
 
@@ -126,7 +153,7 @@ function movebullet()
   if bullet.time < 0 then
    del(playerbullets,bullet)
   end
-  bullet.pos=movepointbyvelocity(bullet)
+  bullet.pos=movepointbyvelocity(bullet,1)
   wrapposition(bullet)
  end
 end
@@ -151,6 +178,7 @@ function explodeasteroid(index,asteroid)
  local newscale = orgscale*2 
  local newspeed =orgscale*1.5
  sfx(1)
+ spawnparticles(asteroid.pos,asteroid.vel,50,10/asteroid.scale)
  if orgscale < 3 then
   local asteroid 
   for count = 1, 2 do
@@ -174,6 +202,7 @@ function checkshiphits()
  for aindex, asteroid in ipairs(asteroids) do
   if checkseparation(ship.pos,asteroid.pos,asteroid.radius) then --asteroidrad+asteroidradplus) then
    if polygoninpolygon(ship,asteroid) then
+    spawnshipparts(ship.pos,ship.vel,120)
     explodeasteroid(aindex,asteroid)
     score=score+(50*asteroid.scale)
     gamestate=stateshipkilled
@@ -224,7 +253,7 @@ end
 
 function checkrespawn()
  for aindex, asteroid in ipairs(asteroids) do
-  if checkseparation(respawnpos,asteroid.pos,asteroid.radius+10) then --asteroidrad+asteroidradplus) then
+  if checkseparation(respawnpos,asteroid.pos,asteroid.radius+2) then --asteroidrad+asteroidradplus) then
    return true
   end
  end
@@ -245,6 +274,12 @@ end
 
 -->8
 --draw
+function hcenter(s)
+ --screen center minus the string length
+ --times half a characters width in pixels
+ return 64-#s*2
+end
+
 function drawlives(x,y,width,length)
  for i=1, playerlives do
   line(x+i*6,y,(x+width)+i*6,y+length)
@@ -258,14 +293,26 @@ function drawasteroids()
  end
 end
 
+function drawshipparts()
+ for index, shippart in ipairs(shipparts) do
+  drawshape(shippart)
+ end
+end
+
 function drawgameinfo()
  drawlives(100,0,1,3)
- print("score : "..score)
+ print("score : "..score,0,0)
 end
 
 function drawbullets()
  for index, bullet in ipairs(playerbullets) do
   pset(bullet.pos.x,bullet.pos.y,bullet.col)
+ end
+end
+
+function drawparticles()
+ for index, particle in ipairs(particles) do
+  pset(particle.pos.x,particle.pos.y,particle.col)
  end
 end
 
@@ -294,17 +341,21 @@ function drawtheship()
   drawshape(ship)
  end
 end
+
+
 -->8
 --game states
 function dostartscreen()
- print("asteroids", 45,60)
- print("press z to start", 40,80)
+ print("asteroids", hcenter("asteroids"),60)
+ print("press z to start", hcenter("press z to start"),80)
  if btnp(4) then
   initgame()
   gamestate=stateplay
  end
 end
 function movenonplayerstuff()
+ moveparticle()
+ moveshipparts()
  moveasteroid()
  movebullet()
  checkbullethits()
@@ -323,8 +374,8 @@ end
 
 function doendscreen()
  movenonplayerstuff()
- print("game over", 60,60)
- print("press z to start", 40,80)
+ print("game over",hcenter("game over"),40)
+ print("press z to start",hcenter("press z to start"),80)
  if btnp(4) then
   initgame()
   gamestate=stateplay
@@ -347,7 +398,7 @@ function doshipkilled()
  doplaygame()
  playerlives-=1
  sfx(1)
- delaytimer=60
+ delaytimer=120
  gamestate= stateshipkilldelay
 end
 
@@ -506,9 +557,57 @@ function initgame()
  score=0
  asteroids = {}
  playerbullets = {}
+ particles = {}
+ shipparts = {}
  playerlives=3
  resetplayership()
  generateasteroids()
+end
+
+function spawnparticles(position, velocity, maxlifetime, numparticles)
+ for count= 0,3*rnd(1)+numparticles do
+  local particle = {
+         alive = true,
+         time = maxlifetime*rnd(1),
+         pos = {
+          x=position.x,
+          y=position.y
+         },
+         vel= {
+          speed =velocity.speed*rnd(1)+.5,
+          direction =(velocity.direction+rnd(1))*rnd(1)
+         },
+         col = 6,
+         }
+  add (particles,particle)
+ end
+end
+
+function spawnshipparts(position, velocity, maxlifetime)
+ for count= 0,3+flr(rnd(3)*1) do
+  local invert = -1
+  local partvel= {
+          speed =velocity.speed*rnd(1)+.1,
+          direction =velocity.direction+rnd(1)*rnd(1)
+         }
+  if count%2==0 then invert=invert*invert end
+  
+  local shippart = {
+         alive = true,
+         time = maxlifetime*rnd(1),
+         pos = {
+          x=position.x,
+          y=position.y
+         },
+         shipvel = {ship.speed,ship.vel},
+         vel =addvectors(ship.vel,partvel),
+         rotspeed = (rnd(1)*.01)*invert,
+         rot = 0,
+         points = {{x=0,y=0},{x=1+flr(rnd(3)*1),y=1+flr(rnd(3)*1)}},
+         col = 6,
+         }
+  add (shipparts,shippart)
+ end
 end
 
 function resetplayership()
@@ -522,10 +621,10 @@ function resetplayership()
    speed =0,
    direction =0
   },
-  acc=0.006,
+  acc=0.009,
   dec=0.0005,
   rotspeed = .01,
-  radius = 10,
+  radius = 2,
   rot = 0,
   col = 6,
    points = {
@@ -534,6 +633,30 @@ function resetplayership()
     {x=-2,y=0},
     {x=-3,y=-2},
     {x=3,y=0}
+  },
+ }
+end
+
+function spawnthrust()
+ thrustjet = {
+  pos = {
+   x=60,
+   y=60
+  },
+  vel= {
+   speed =0,
+   direction =0
+  },
+  acc=0.009,
+  dec=0.0005,
+  rotspeed = .01,
+  radius = 2,
+  rot = 0,
+  col = 6,
+   points = {
+    {x=-2,y=-1},
+    {x=-4,y=0},
+    {x=-2,y=1}
   },
  }
 end
