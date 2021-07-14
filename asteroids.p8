@@ -37,6 +37,7 @@ asteroidmaxrot=.005
 playerlives=3
 delaytimer=0
 score = 0
+thrusting = false
 respawnpos= {x=60,y=60}
 maxplayerbullets=4
 playerbulletspeed=1
@@ -90,9 +91,12 @@ function checkbuttons()
  if btn(1) then ship.rot-=ship.rotspeed end
  if btn(2) then 
   thrust() 
-  return true
+  thrusting = true
+ else
+  thrusting = false
  end
  ship.rot=range(ship.rot)
+ thrustjet.rot = ship.rot
  if btnp(4) then 
   fireplayerbullet()
  end
@@ -113,6 +117,7 @@ function moveship()
  
  ship.pos = movepointbyvelocity(ship,1)
  wrapposition(ship)
+ thrustjet.pos = ship.pos
 end
 
 
@@ -339,6 +344,9 @@ end
 function drawtheship()
  if gamestate==stateplay then
   drawshape(ship)
+  if thrusting and sin(time()*5)>0 then
+   drawshape(thrustjet)
+  end
  end
 end
 
@@ -561,6 +569,7 @@ function initgame()
  shipparts = {}
  playerlives=3
  resetplayership()
+ spawnthrust()
  generateasteroids()
 end
 
@@ -611,7 +620,6 @@ function spawnshipparts(position, velocity, maxlifetime)
 end
 
 function resetplayership()
- drawship=true
  ship = {
   pos = {
    x=60,
