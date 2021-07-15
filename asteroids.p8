@@ -24,7 +24,7 @@ screen_max_x=128
 screen_max_y=128
 --asteroids
 cleared=false
-numasteriods = 1
+numasteriods = 6
 asteroidnumpoints =12 
 asteroidrad=12
 asteroidradplus =8 
@@ -32,6 +32,8 @@ asteroidradminus=7
 asteroidmaxvel=.25
 asteroidminvel=.05
 asteroidmaxrot=.005
+newlevelspd=1
+levelcount =1
 
 
 
@@ -42,8 +44,8 @@ score = 0
 thrusting = false
 respawnpos= {x=60,y=60}
 maxplayerbullets=4
-playerbulletspeed=2.5
-playerbullettime=35
+playerbulletspeed=2
+playerbullettime=55
 playerbulletoffset = {
  x=2,
  y=0
@@ -185,7 +187,7 @@ function explodeasteroid(index,asteroid)
  local orgscale = asteroid.scale
  deli(asteroids,index)
  local newscale = orgscale*2 
- local newspeed =orgscale*1.5
+ local newspeed =orgscale*1.1
  sfx(1)
  spawnparticles(asteroid.pos,asteroid.vel,50,10/asteroid.scale)
  if orgscale < 3 then
@@ -193,7 +195,7 @@ function explodeasteroid(index,asteroid)
   for count = 1, 2 do
    asteroid = spawnasteroid(newscale)
    asteroid.vel = {
-    speed= ((rnd()*(asteroidmaxvel-asteroidminvel))+asteroidminvel)*newspeed,
+    speed= (((rnd()*(asteroidmaxvel-asteroidminvel))+asteroidminvel)*newspeed)*newlevelspd,
     direction = rnd()*1
    }
    asteroid.rotspeed=(rnd()*(2*asteroidmaxrot))-asteroidmaxrot
@@ -586,6 +588,8 @@ end
 --initialize stuff
 function newlevel()
  cleared = false
+ levelcount+=1
+ newlevelspd+=.1
  numasteriods+=1
  asteroids = {}
  generateasteroids()
@@ -593,8 +597,10 @@ function newlevel()
 end
 
 function initgame()
- numasteriods=1
+ numasteriods=4
  score=0
+ newlevelspd=1
+ levelcount=1
  asteroids = {}
  playerbullets = {}
  particles = {}
@@ -665,7 +671,7 @@ function resetplayership()
   acc=0.009,
   dec=0.0005,
   rotspeed = .01,
-  radius = 2,
+  radius = 5,
   rot = 0,
   col = 6,
    points = {
@@ -691,7 +697,7 @@ function spawnthrust()
   acc=0.009,
   dec=0.0005,
   rotspeed = .01,
-  radius = 2,
+  radius = 5,
   rot = 0,
   col = 6,
    points = {
@@ -776,7 +782,7 @@ function generateasteroids()
  for count = 1, numasteriods do
   asteroid = spawnasteroid(1)
   asteroid.vel = {
-   speed=  (rnd()*(asteroidmaxvel-asteroidminvel))+asteroidminvel,
+   speed=  ((rnd()*(asteroidmaxvel-asteroidminvel))+asteroidminvel)*newlevelspd,
    direction = rnd()*1
   }
   asteroid.rotspeed= (rnd()*(2*asteroidmaxrot))-asteroidmaxrot
