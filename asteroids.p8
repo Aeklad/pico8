@@ -16,12 +16,14 @@ statestart=0
 stateplay=10
 stateshipkilled=12
 stateshipkilldelay=15
+stateleveldelay=18
 stateend=20
 statewaitforrespawn=16
 gamestate=state_init
 screen_max_x=128
 screen_max_y=128
 --asteroids
+cleared=false
 numasteriods = 1
 asteroidnumpoints =12 
 asteroidrad=12
@@ -40,8 +42,8 @@ score = 0
 thrusting = false
 respawnpos= {x=60,y=60}
 maxplayerbullets=4
-playerbulletspeed=1
-playerbullettime=100
+playerbulletspeed=2.5
+playerbullettime=35
 playerbulletoffset = {
  x=2,
  y=0
@@ -66,6 +68,8 @@ function _update60()
   if not checkrespawn() then
    doshiprespawn()
   end
+ elseif gamestate == stateleveldelay then
+  donewleveldelay()
  elseif gamestate == stateend then
   drawgameinfo()
   doendscreen()
@@ -195,8 +199,10 @@ function explodeasteroid(index,asteroid)
    asteroid.rotspeed=(rnd()*(2*asteroidmaxrot))-asteroidmaxrot
    asteroid.pos=pos
    add(asteroids,asteroid)
-   --debug[1]=orgscale
+  
   end
+ elseif #asteroids <=0 then
+    endlevel()
  end
 end
 
@@ -342,7 +348,7 @@ function drawshape(shape)
 end
 
 function drawtheship()
- if gamestate==stateplay then
+ if gamestate==stateplay or gamestate==stateleveldelay then
   drawshape(ship)
   if thrusting and sin(time()*5)>0 then
    drawshape(thrustjet)
@@ -369,15 +375,21 @@ function movenonplayerstuff()
  checkbullethits()
 end
 
+function movenonasteroidstuff()
+ moveparticle()
+ moveshipparts()
+ movebullet()
+ checkbullethits()
+ checkbuttons()
+ moveship()
+end
+
 
 function doplaygame()
  moveship()
  checkbuttons()
  movenonplayerstuff()
  checkshiphits()
- if #asteroids <1 then
-  newlevel()
- end
 end
 
 function doendscreen()
@@ -388,6 +400,12 @@ function doendscreen()
   initgame()
   gamestate=stateplay
  end
+end
+
+function endlevel()
+  cleared=true
+  delaytimer=120
+  gamestate=stateleveldelay
 end
 
 function doshipkilldelay()
@@ -402,6 +420,7 @@ function doshipkilldelay()
  end   
 end
 
+
 function doshipkilled()
  doplaygame()
  playerlives-=1
@@ -411,11 +430,20 @@ function doshipkilled()
 end
 
 function doshiprespawn()
- doplaygame()
  resetplayership()
  gamestate=stateplay
+end
+ 
+function donewleveldelay()
+ movenonasteroidstuff()
+ delaytimer-=1
+ if delaytimer<=0 then
+  newlevel()
+ end   
+ 
 
 end
+
 -->8
 --maths
 
@@ -490,24 +518,26 @@ end
 function polygoninpolygon(shape1,shape2)
  local testpoint = {}
  local rotatedpoint = {}
- for index,point in ipairs(shape1.points) do
-  rotatedpoint= rotatepoint(point,shape1.rotation)
-  testpoint= {
-   x = rotatedpoint.x + shape1.pos.x,
-   y= rotatedpoint.y + shape1.pos.y
-  }
-  if pointinpolygon(testpoint,shape2) then
-   return true
+ if checkseparation(shape1.pos,shape2.pos,shape1.radius+shape2.radius) then
+  for index,point in ipairs(shape1.points) do
+   rotatedpoint= rotatepoint(point,shape1.rotation)
+   testpoint= {
+    x = rotatedpoint.x + shape1.pos.x,
+    y= rotatedpoint.y + shape1.pos.y
+   }
+   if pointinpolygon(testpoint,shape2) then
+    return true
+   end
   end
- end
- for index,point in ipairs(shape2.points) do
-  rotatedpoint= rotatepoint(point,shape2.rotation)
-  testpoint= {
-   x = rotatedpoint.x + shape1.pos.x,
-   y= rotatedpoint.y + shape1.pos.y
-  }
-  if pointinpolygon(testpoint,shape1) then
-   return true
+  for index,point in ipairs(shape2.points) do
+   rotatedpoint= rotatepoint(point,shape2.rotation)
+   testpoint= {
+    x = rotatedpoint.x + shape1.pos.x,
+    y= rotatedpoint.y + shape1.pos.y
+   }
+   if pointinpolygon(testpoint,shape1) then
+    return true
+   end
   end
  end
  return false
@@ -555,13 +585,15 @@ end
 -->8
 --initialize stuff
 function newlevel()
+ cleared = false
  numasteriods+=1
  asteroids = {}
  generateasteroids()
+ gamestate=stateplay
 end
 
 function initgame()
- numasteriods=6
+ numasteriods=1
  score=0
  asteroids = {}
  playerbullets = {}
@@ -620,6 +652,7 @@ function spawnshipparts(position, velocity, maxlifetime)
 end
 
 function resetplayership()
+ if cleared then newlevel() end
  ship = {
   pos = {
    x=60,
