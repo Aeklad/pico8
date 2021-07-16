@@ -36,7 +36,6 @@ newlevelspd=1
 levelcount =1
 
 
-
 --player
 playerlives=3
 delaytimer=0
@@ -82,6 +81,7 @@ function _draw()
  drawparticles()
  drawshipparts()
  drawtheship()
+ drawalienship()
  drawbullets()
  drawasteroids()
  drawgameinfo()
@@ -126,6 +126,26 @@ function moveship()
  thrustjet.pos = ship.pos
 end
 
+function movealienship()
+ if not alienship.active then
+  alienship.spawntimer -=1
+  if alienship.spawntimer <= 0 then
+   spawnalienship()
+  end
+ else
+  alienship.directiontimer -=1
+  alienship.pos = movepointbyvelocity(alienship,1)
+  wrapposition(alienship)
+  if alienship.directiontimer <= 0 then
+   alienship.directiontimer = randomrange(50,100)
+   if alienship.vel.direction > .25 and alienship.vel.direction < .75 then
+    alienship.vel.direction = alienship.leftdir[1+flr(rnd(3))]
+   else
+    alienship.vel.direction = alienship.rightdir[1+flr(rnd(3))]
+   end
+  end
+ end
+end
 
 function moveasteroid()
  for index, asteroid in ipairs(asteroids) do
@@ -358,6 +378,11 @@ function drawtheship()
  end
 end
 
+function drawalienship()
+ if alienship.active then
+  drawshape(alienship)
+ end
+end
 
 -->8
 --game states
@@ -366,6 +391,7 @@ function dostartscreen()
  print("press z to start", hcenter("press z to start"),80)
  if btnp(4) then
   initgame()
+  alienship.active=false
   gamestate=stateplay
  end
 end
@@ -373,6 +399,7 @@ function movenonplayerstuff()
  moveparticle()
  moveshipparts()
  moveasteroid()
+ movealienship()
  movebullet()
  checkbullethits()
 end
@@ -584,6 +611,20 @@ function comptovector(x,y)
  }
  return vector
 end
+
+function even()
+ x=flr(rnd(10))+1
+ if x%2==0 then
+  return true
+ else
+  return false
+ end
+end
+
+function randomrange(a,b)
+ return (a+flr(rnd(b)))
+end
+
 -->8
 --initialize stuff
 function newlevel()
@@ -609,6 +650,7 @@ function initgame()
  resetplayership()
  spawnthrust()
  generateasteroids()
+ initalienship(1)
 end
 
 function spawnparticles(position, velocity, maxlifetime, numparticles)
@@ -681,6 +723,41 @@ function resetplayership()
     {x=-3,y=-2},
     {x=3,y=0}
   },
+ }
+end
+
+function initalienship(scale)
+ alienship = {
+  pos = {
+   x=0,
+   y=0
+  },
+  vel= {
+   speed =0,
+   direction =0
+  },
+  radius = 5,
+  scale = 1,
+  col = 6,
+   points = {
+    {x=0/scale,y=0/scale},
+    {x=7/scale,y=0/scale},
+    {x=6/scale,y=-1/scale},
+    {x=5/scale,y=-1/scale},
+    {x=4/scale,y=-2/scale},
+    {x=3/scale,y=-2/scale},
+    {x=2/scale,y=-1/scale},
+    {x=1/scale,y=-1/scale},
+    {x=0/scale,y=0/scale},
+    {x=1/scale,y=1/scale},
+    {x=6/scale,y=1/scale},
+    {x=7/scale,y=0/scale}
+  },
+  active = true,
+  spawntimer = 50,
+  directiontimer = randomrange(50,200),
+  leftdir={.5,.625,.325},
+  rightdir={0,.125,.825}
  }
 end
 
@@ -795,6 +872,19 @@ function generateasteroids()
   end
   add(asteroids,asteroid)
  end
+end
+
+function spawnalienship()
+ alienship.vel.speed = .5
+ if even() then
+  xpos=0
+  alienship.vel.direction =0
+ else
+  xpos=120
+  alienship.vel.direction =.5
+ end
+ alienship.active=true
+ alienship.pos = {x=xpos,y=rnd(128)}
 end
 
 __gfx__
