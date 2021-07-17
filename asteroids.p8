@@ -245,6 +245,19 @@ function checkshiphits()
  end
 end
 
+function checkalienshiphits()
+ for aindex, asteroid in ipairs(asteroids) do
+  if checkseparation(alienship.pos,asteroid.pos,asteroid.radius) then --asteroidrad+asteroidradplus) then
+   if polygoninpolygon(alienship,asteroid) then
+    explodeasteroid(aindex,asteroid)
+    alienship.active=false
+    spawnshipparts(alienship.pos,alienship.vel,120)
+    break
+   end
+  end
+ end
+end
+
 function checkbullethits()
  for bindex, bullet in ipairs(playerbullets) do
   for aindex, asteroid in ipairs(asteroids) do
@@ -419,6 +432,9 @@ function doplaygame()
  checkbuttons()
  movenonplayerstuff()
  checkshiphits()
+ if alienship.active then
+  checkalienshiphits()
+ end
 end
 
 function doendscreen()
@@ -427,6 +443,7 @@ function doendscreen()
  print("press z to start",hcenter("press z to start"),80)
  if btnp(4) then
   initgame()
+  alienship.active =false 
   gamestate=stateplay
  end
 end
@@ -754,7 +771,7 @@ function initalienship(scale)
     {x=7/scale,y=0/scale}
   },
   active = true,
-  spawntimer = 50,
+  spawntimer = randomrange(500,700),
   directiontimer = randomrange(50,200),
   leftdir={.5,.625,.325},
   rightdir={0,.125,.825}
@@ -875,6 +892,7 @@ function generateasteroids()
 end
 
 function spawnalienship()
+ alienship.spawntimer=randomrange(100,400)
  alienship.vel.speed = .5
  if even() then
   xpos=0
