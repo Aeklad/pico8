@@ -221,10 +221,18 @@ function explodeasteroid(index,asteroid)
    asteroid.rotspeed=(rnd()*(2*asteroidmaxrot))-asteroidmaxrot
    asteroid.pos=pos
    add(asteroids,asteroid)
-  
   end
  elseif #asteroids <=0 then
-    endlevel()
+  endlevel()
+ end
+end
+
+function explodealien()
+ if alienship.active then
+  deli(playerbullets,bindex)
+  sfx(1)
+  spawnshipparts(alienship.pos,alienship.vel,120)
+  alienship.active = false
  end
 end
 
@@ -243,6 +251,13 @@ function checkshiphits()
    end
   end
  end
+ if checkseparation(ship.pos,alienship.pos,alienship.radius) then
+  if polygoninpolygon(ship,alienship) then
+   explodealien()
+   score+=50
+   gamestate=stateshipkilled
+  end
+ end
 end
 
 function checkalienshiphits()
@@ -250,8 +265,7 @@ function checkalienshiphits()
   if checkseparation(alienship.pos,asteroid.pos,asteroid.radius) then --asteroidrad+asteroidradplus) then
    if polygoninpolygon(alienship,asteroid) then
     explodeasteroid(aindex,asteroid)
-    alienship.active=false
-    spawnshipparts(alienship.pos,alienship.vel,120)
+    explodealien()
     break
    end
   end
@@ -268,6 +282,18 @@ function checkbullethits()
       score=score+(50*asteroid.scale)
       break
      end
+   end
+  end
+ end
+end
+
+function checkbullethitsalien()
+ for bindex, bullet in ipairs(playerbullets) do
+   if checkseparation(bullet.pos,alienship.pos,alienship.radius) then
+    if pointinpolygon(bullet.pos,alienship) then
+     explodealien()
+     score+=50
+     break
    end
   end
  end
@@ -415,13 +441,16 @@ function movenonplayerstuff()
  movealienship()
  movebullet()
  checkbullethits()
+ checkbullethitsalien()
 end
 
 function movenonasteroidstuff()
  moveparticle()
  moveshipparts()
  movebullet()
+ movealienship()
  checkbullethits()
+ checkbullethitsalien()
  checkbuttons()
  moveship()
 end
@@ -655,7 +684,7 @@ function newlevel()
 end
 
 function initgame()
- numasteriods=4
+ numasteriods=1
  score=0
  newlevelspd=1
  levelcount=1
