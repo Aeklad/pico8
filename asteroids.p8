@@ -42,6 +42,9 @@ delaytimer=0
 score = 0
 thrusting = false
 respawnpos= {x=60,y=60}
+maxenemybullets=2
+enemybullettime=55
+enemybulletspeed=1
 maxplayerbullets=4
 playerbulletspeed=2
 playerbullettime=55
@@ -82,7 +85,8 @@ function _draw()
  drawshipparts()
  drawtheship()
  drawalienship()
- drawbullets()
+ drawbullets(playerbullets)
+ drawbullets(enemybullets)
  drawasteroids()
  drawgameinfo()
  for txt in all(debug) do
@@ -133,9 +137,14 @@ function movealienship()
    spawnalienship()
   end
  else
+  alienship.spawnbullettime-=1
   alienship.directiontimer -=1
   alienship.pos = movepointbyvelocity(alienship,1)
   wrapposition(alienship)
+  if alienship.spawnbullettime <= 0 then
+   fireenemybullet()
+   alienship.spawnbullettime= randomrange(50,100)
+  end
   if alienship.directiontimer <= 0 then
    alienship.directiontimer = randomrange(50,100)
    if alienship.vel.direction > .25 and alienship.vel.direction < .75 then
@@ -178,11 +187,11 @@ function moveparticle()
  end
 end
 
-function movebullet()
- for index, bullet in ipairs(playerbullets) do
+function movebullet(bullettype)
+ for index, bullet in ipairs(bullettype) do
   bullet.time -=1
   if bullet.time < 0 then
-   del(playerbullets,bullet)
+   del(bullettype,bullet)
   end
   bullet.pos=movepointbyvelocity(bullet,1)
   wrapposition(bullet)
@@ -229,10 +238,10 @@ end
 
 function explodealien()
  if alienship.active then
+  alienship.active = false
   deli(playerbullets,bindex)
   sfx(1)
   spawnshipparts(alienship.pos,alienship.vel,120)
-  alienship.active = false
  end
 end
 
@@ -253,9 +262,21 @@ function checkshiphits()
  end
  if checkseparation(ship.pos,alienship.pos,alienship.radius) then
   if polygoninpolygon(ship,alienship) then
-   explodealien()
-   score+=50
-   gamestate=stateshipkilled
+   if alienship.active then
+    explodealien()
+    score+=50
+    gamestate=stateshipkilled
+   end
+  end
+ end
+ for index, bullet in ipairs(enemybullets) do
+  if checkseparation(bullet.pos,ship.pos,ship.radius) then --asteroidrad+asteroidradplus) then
+   if pointinpolygon(bullet.pos,ship) then
+    del(enemybullets,bullet)
+    spawnshipparts(ship.pos,ship.vel,120)
+    gamestate=stateshipkilled
+    break
+   end
   end
  end
 end
@@ -272,12 +293,12 @@ function checkalienshiphits()
  end
 end
 
-function checkbullethits()
- for bindex, bullet in ipairs(playerbullets) do
+function checkbullethits(bullettype)
+ for bindex, bullet in ipairs(bullettype) do
   for aindex, asteroid in ipairs(asteroids) do
    if checkseparation(bullet.pos,asteroid.pos,asteroid.radius) then
     if pointinpolygon(bullet.pos,asteroid) then
-      deli(playerbullets,bindex)
+      deli(bullettype,bindex)
       explodeasteroid(aindex,asteroid)
       score=score+(50*asteroid.scale)
       break
@@ -320,6 +341,19 @@ function fireplayerbullet()
    bullet.vel.direction=ship.rot
    add(playerbullets,bullet)
    sfx(0)
+  end
+end
+
+function fireenemybullet()
+ local bullet 
+ if #enemybullets < maxenemybullets then
+   bullet = spawnbullet()
+   bullet.time=enemybullettime 
+   bullet.pos.x=alienship.pos.x
+   bullet.pos.y=alienship.pos.y
+   bullet.vel.speed=enemybulletspeed
+   bullet.vel.direction = rnd(1)
+   add(enemybullets,bullet)
   end
 end
 
@@ -376,8 +410,8 @@ function drawgameinfo()
  print("score : "..score,0,0)
 end
 
-function drawbullets()
- for index, bullet in ipairs(playerbullets) do
+function drawbullets(bullettype)
+ for index, bullet in ipairs(bullettype) do
   pset(bullet.pos.x,bullet.pos.y,bullet.col)
  end
 end
@@ -426,6 +460,7 @@ end
 -->8
 --game states
 function dostartscreen()
+ alienship.active=false
  print("asteroids", hcenter("asteroids"),60)
  print("press z to start", hcenter("press z to start"),80)
  if btnp(4) then
@@ -439,17 +474,21 @@ function movenonplayerstuff()
  moveshipparts()
  moveasteroid()
  movealienship()
- movebullet()
- checkbullethits()
+ movebullet(playerbullets)
+ movebullet(enemybullets)
+ checkbullethits(playerbullets)
+ checkbullethits(enemybullets)
  checkbullethitsalien()
 end
 
 function movenonasteroidstuff()
  moveparticle()
  moveshipparts()
- movebullet()
+ movebullet(playerbullets)
+ movebullet(enemybullets)
  movealienship()
- checkbullethits()
+ checkbullethits(playerbullets)
+ checkbullethits(enemybullets)
  checkbullethitsalien()
  checkbuttons()
  moveship()
@@ -690,6 +729,7 @@ function initgame()
  levelcount=1
  asteroids = {}
  playerbullets = {}
+ enemybullets = {}
  particles = {}
  shipparts = {}
  playerlives=3
@@ -801,6 +841,7 @@ function initalienship(scale)
   },
   active = true,
   spawntimer = randomrange(500,700),
+  spawnbullettime = randomrange(20,70),
   directiontimer = randomrange(50,200),
   leftdir={.5,.625,.325},
   rightdir={0,.125,.825}
