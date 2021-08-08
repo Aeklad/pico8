@@ -34,17 +34,18 @@ asteroidminvel=.05
 asteroidmaxrot=.005
 newlevelspd=1
 levelcount =1
+leveltimer = 0
 
 
 --player
 playerlives=3
 delaytimer=0
+endscreentimer=0
 score = 0
 thrusting = false
 respawnpos= {x=60,y=60}
 maxenemybullets=2
 enemybullettime=55
-enemybulletspeed=1
 maxplayerbullets=4
 playerbulletspeed=2
 playerbullettime=55
@@ -70,13 +71,19 @@ function _update60()
  elseif gamestate== statewaitforrespawn then
   movenonplayerstuff()
   if not checkrespawn() then
-   doshiprespawn()
+    doshiprespawn()
   end
  elseif gamestate == stateleveldelay then
   donewleveldelay()
  elseif gamestate == stateend then
   drawgameinfo()
   doendscreen()
+  if cleared then
+   delaytimer-=1
+   if delaytimer <=0 then
+    endgameasteroids()
+   end
+  end
  end
 end
  
@@ -134,7 +141,11 @@ function movealienship()
  if not alienship.active then
   alienship.spawntimer -=1
   if alienship.spawntimer <= 0 then
-   spawnalienship()
+   if leveltimer > 4000/levelcount then
+    spawnalienship(1.8,2,20,40)
+   else
+    spawnalienship(1,.5,50,100)
+   end
   end
  else
   alienship.spawnbullettime-=1
@@ -143,7 +154,7 @@ function movealienship()
   wrapposition(alienship)
   if alienship.spawnbullettime <= 0 then
    fireenemybullet()
-   alienship.spawnbullettime= randomrange(50,100)
+   alienship.spawnbullettime= randomrange(alienship.minrange,alienship.maxrange)
   end
   if alienship.directiontimer <= 0 then
    alienship.directiontimer = randomrange(50,100)
@@ -232,7 +243,12 @@ function explodeasteroid(index,asteroid)
    add(asteroids,asteroid)
   end
  elseif #asteroids <=0 then
-  endlevel()
+  if gamestate != stateend then
+   endlevel()
+  else
+   cleared=true
+   delaytimer=120
+  end
  end
 end
 
@@ -300,7 +316,9 @@ function checkbullethits(bullettype)
     if pointinpolygon(bullet.pos,asteroid) then
       deli(bullettype,bindex)
       explodeasteroid(aindex,asteroid)
-      score=score+(50*asteroid.scale)
+      if bullettype == playerbullets then
+       score=score+(50*asteroid.scale)
+      end
       break
      end
    end
@@ -351,7 +369,7 @@ function fireenemybullet()
    bullet.time=enemybullettime 
    bullet.pos.x=alienship.pos.x
    bullet.pos.y=alienship.pos.y
-   bullet.vel.speed=enemybulletspeed
+   bullet.vel.speed=alienship.bulletspeed
    bullet.vel.direction = rnd(1)
    add(enemybullets,bullet)
   end
@@ -362,6 +380,9 @@ function checkrespawn()
   if checkseparation(respawnpos,asteroid.pos,asteroid.radius+2) then --asteroidrad+asteroidradplus) then
    return true
   end
+ end
+ if checkseparation(respawnpos,alienship.pos,alienship.radius) then
+  return true
  end
 end
 
@@ -460,6 +481,7 @@ end
 -->8
 --game states
 function dostartscreen()
+ alienship.spawntimer = 120
  alienship.active=false
  print("asteroids", hcenter("asteroids"),60)
  print("press z to start", hcenter("press z to start"),80)
@@ -496,6 +518,7 @@ end
 
 
 function doplaygame()
+ leveltimer +=1
  moveship()
  checkbuttons()
  movenonplayerstuff()
@@ -507,8 +530,16 @@ end
 
 function doendscreen()
  movenonplayerstuff()
+ if alienship.active then
+  checkalienshiphits()
+ end
  print("game over",hcenter("game over"),40)
  print("press z to start",hcenter("press z to start"),80)
+ endscreentimer -= 1
+ if endscreentimer < 0 then
+  initgame()
+  gamestate=statestart 
+ end
  if btnp(4) then
   initgame()
   alienship.active =false 
@@ -526,7 +557,7 @@ function doshipkilldelay()
  movenonplayerstuff()
  delaytimer-=1
  if delaytimer==0 then
-  if playerlives == 0 then
+  if playerlives <= 0 then
    gamestate= stateend 
   else
    gamestate=statewaitforrespawn  
@@ -713,17 +744,23 @@ end
 -->8
 --initialize stuff
 function newlevel()
+ leveltimer=0
  cleared = false
  levelcount+=1
  newlevelspd+=.1
  numasteriods+=1
  asteroids = {}
  generateasteroids()
- gamestate=stateplay
+ if playerlives > 0 then
+  gamestate=stateplay
+ else
+  gamestate=stateend 
+ end
 end
 
 function initgame()
- numasteriods=1
+ endscreentimer=950
+ numasteriods=4
  score=0
  newlevelspd=1
  levelcount=1
@@ -961,7 +998,43 @@ function generateasteroids()
  end
 end
 
-function spawnalienship()
+function spawnalienship(scale,bulletspeed,minrange,maxrange)
+ alienship = {
+  pos = {
+   x=0,
+   y=0
+  },
+  vel= {
+   speed =0,
+   direction =0
+  },
+  radius = 5,
+  scale = scale,
+  bulletspeed=bulletspeed,
+  maxrange = maxrange,
+  minrange = minrange,
+  col = 6,
+   points = {
+    {x=0/scale,y=0/scale},
+    {x=7/scale,y=0/scale},
+    {x=6/scale,y=-1/scale},
+    {x=5/scale,y=-1/scale},
+    {x=4/scale,y=-2/scale},
+    {x=3/scale,y=-2/scale},
+    {x=2/scale,y=-1/scale},
+    {x=1/scale,y=-1/scale},
+    {x=0/scale,y=0/scale},
+    {x=1/scale,y=1/scale},
+    {x=6/scale,y=1/scale},
+    {x=7/scale,y=0/scale}
+  },
+  active = true,
+  spawntimer = randomrange(500,700),
+  spawnbullettime = randomrange(20,70),
+  directiontimer = randomrange(50,200),
+  leftdir={.5,.625,.325},
+  rightdir={0,.125,.825}
+ }
  alienship.spawntimer=randomrange(100,400)
  alienship.vel.speed = .5
  if even() then
@@ -973,6 +1046,12 @@ function spawnalienship()
  end
  alienship.active=true
  alienship.pos = {x=xpos,y=rnd(128)}
+end
+
+function endgameasteroids()
+ cleared = false
+ numasteriods += .5
+ generateasteroids()
 end
 
 __gfx__
