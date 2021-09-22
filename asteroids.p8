@@ -10,7 +10,6 @@ poke4(0x5f1c,0x8f8e.8d8c)
 --***********sets button press delay to 100
 poke(0x5f5c,100)
 poke(0x5f5d,100)
-debug = {}
 --states
 statestart=0
 stateplay=10
@@ -20,11 +19,18 @@ stateleveldelay=18
 stateend=20
 statewaitforrespawn=16
 gamestate=state_init
+--game stuff
 screen_max_x=128
 screen_max_y=128
---asteroids
 cleared=false
-numasteriods = 6
+levelcount =1
+alienspawninterval = 4000
+newlevelspd=1
+leveltimer = 0
+score = 0
+endscreentimer=0
+--asteroids
+numasteriods = 1
 asteroidnumpoints =12 
 asteroidrad=12
 asteroidradplus =8 
@@ -32,20 +38,10 @@ asteroidradminus=7
 asteroidmaxvel=.25
 asteroidminvel=.05
 asteroidmaxrot=.005
-newlevelspd=1
-levelcount =1
-leveltimer = 0
-
-
 --player
 playerlives=3
 delaytimer=0
-endscreentimer=0
-score = 0
-thrusting = false
 respawnpos= {x=60,y=60}
-maxenemybullets=2
-enemybullettime=55
 maxplayerbullets=4
 playerbulletspeed=2
 playerbullettime=55
@@ -53,6 +49,9 @@ playerbulletoffset = {
  x=2,
  y=0
 }
+--enemy
+maxenemybullets=2
+enemybullettime=55
 
 function _update60()
  cls(0)
@@ -97,7 +96,7 @@ function _draw()
  drawasteroids()
  drawgameinfo()
  for txt in all(debug) do
-  print(txt,10,10,8)
+  print(txt)
  end
 end
 
@@ -108,9 +107,6 @@ function checkbuttons()
  if btn(1) then ship.rot-=ship.rotspeed end
  if btn(2) then 
   thrust() 
-  thrusting = true
- else
-  thrusting = false
  end
  ship.rot=range(ship.rot)
  thrustjet.rot = ship.rot
@@ -120,7 +116,7 @@ function checkbuttons()
 end
 
 function movepointbyvelocity(object,spd)
- comp = getvectorcomp(object.vel)
+ local comp = getvectorcomp(object.vel)
  local newpos= {
   x=object.pos.x + (comp.xcomp)/spd,
   y=object.pos.y + (comp.ycomp)/spd
@@ -141,10 +137,10 @@ function movealienship()
  if not alienship.active then
   alienship.spawntimer -=1
   if alienship.spawntimer <= 0 then
-   if leveltimer > 4000/levelcount then
-    spawnalienship(1.8,2,20,40)
+   if leveltimer > alienspawninterval/levelcount then
+    spawnalienship(1.8,2,20,40,100)
    else
-    spawnalienship(1,.5,50,100)
+    spawnalienship(1,2,50,100,50)
    end
   end
  else
@@ -165,6 +161,8 @@ function movealienship()
    end
   end
  end
+ debug[1] = leveltimer
+ debug[2] = levelcount
 end
 
 function moveasteroid()
@@ -222,12 +220,15 @@ function checkseparation (p1,p2,sep)
  return (dsq<=sepsq)
 end
 
-function explodeasteroid(index,asteroid)
+function explodeasteroid(index,asteroid,playerkill)
  local pos=asteroid.pos
  local orgscale = asteroid.scale
  deli(asteroids,index)
  local newscale = orgscale*2 
  local newspeed =orgscale*1.1
+ if playerkill then
+  updatescore(asteroid.scale,50)
+ end
  sfx(1)
  spawnparticles(asteroid.pos,asteroid.vel,50,10/asteroid.scale)
  if orgscale < 3 then
@@ -252,16 +253,20 @@ function explodeasteroid(index,asteroid)
  end
 end
 
-function explodealien()
+function explodealien(playerkill)
  if alienship.active then
   alienship.active = false
   deli(playerbullets,bindex)
   sfx(1)
   spawnshipparts(alienship.pos,alienship.vel,120)
+  if playerkill then
+   updatescore(alienship.value,1)
+  end
  end
 end
 
-function updatescore()
+function updatescore(object,multiplier)
+ score=score+(multiplier*object)
 end
 
 function checkshiphits()
@@ -269,8 +274,8 @@ function checkshiphits()
   if checkseparation(ship.pos,asteroid.pos,asteroid.radius) then --asteroidrad+asteroidradplus) then
    if polygoninpolygon(ship,asteroid) then
     spawnshipparts(ship.pos,ship.vel,120)
-    explodeasteroid(aindex,asteroid)
-    score=score+(50*asteroid.scale)
+    explodeasteroid(aindex,asteroid,true)
+    --score=score+(50*asteroid.scale)
     gamestate=stateshipkilled
     break
    end
@@ -279,8 +284,8 @@ function checkshiphits()
  if checkseparation(ship.pos,alienship.pos,alienship.radius) then
   if polygoninpolygon(ship,alienship) then
    if alienship.active then
-    explodealien()
-    score+=50
+    explodealien(true)
+    --score+=50
     gamestate=stateshipkilled
    end
   end
@@ -302,7 +307,7 @@ function checkalienshiphits()
   if checkseparation(alienship.pos,asteroid.pos,asteroid.radius) then --asteroidrad+asteroidradplus) then
    if polygoninpolygon(alienship,asteroid) then
     explodeasteroid(aindex,asteroid)
-    explodealien()
+    explodealien(false)
     break
    end
   end
@@ -312,12 +317,22 @@ end
 function checkbullethits(bullettype)
  for bindex, bullet in ipairs(bullettype) do
   for aindex, asteroid in ipairs(asteroids) do
+   if checkseparation(bullet.pos,alienship.pos,alienship.radius) then
+    if pointinpolygon(bullet.pos,alienship) then
+     if bullettype == playerbullets then
+      explodealien(true)
+      --score+=50
+     end
+     break
+   end
+  end
    if checkseparation(bullet.pos,asteroid.pos,asteroid.radius) then
     if pointinpolygon(bullet.pos,asteroid) then
       deli(bullettype,bindex)
-      explodeasteroid(aindex,asteroid)
       if bullettype == playerbullets then
-       score=score+(50*asteroid.scale)
+       explodeasteroid(aindex,asteroid,true)
+      else
+       explodeasteroid(aindex,asteroid,false)
       end
       break
      end
@@ -331,7 +346,7 @@ function checkbullethitsalien()
    if checkseparation(bullet.pos,alienship.pos,alienship.radius) then
     if pointinpolygon(bullet.pos,alienship) then
      explodealien()
-     score+=50
+     --score+=50
      break
    end
   end
@@ -466,7 +481,7 @@ end
 function drawtheship()
  if gamestate==stateplay or gamestate==stateleveldelay then
   drawshape(ship)
-  if thrusting and sin(time()*5)>0 then
+  if btn(2) and sin(time()*5)>0 then
    drawshape(thrustjet)
   end
  end
@@ -480,6 +495,7 @@ end
 
 -->8
 --game states
+
 function dostartscreen()
  alienship.spawntimer = 120
  alienship.active=false
@@ -491,6 +507,7 @@ function dostartscreen()
   gamestate=stateplay
  end
 end
+
 function movenonplayerstuff()
  moveparticle()
  moveshipparts()
@@ -500,7 +517,7 @@ function movenonplayerstuff()
  movebullet(enemybullets)
  checkbullethits(playerbullets)
  checkbullethits(enemybullets)
- checkbullethitsalien()
+ --checkbullethitsalien()
 end
 
 function movenonasteroidstuff()
@@ -511,11 +528,10 @@ function movenonasteroidstuff()
  movealienship()
  checkbullethits(playerbullets)
  checkbullethits(enemybullets)
- checkbullethitsalien()
+ --checkbullethitsalien()
  checkbuttons()
  moveship()
 end
-
 
 function doplaygame()
  leveltimer +=1
@@ -760,7 +776,7 @@ end
 
 function initgame()
  endscreentimer=950
- numasteriods=4
+ numasteriods=1
  score=0
  newlevelspd=1
  levelcount=1
@@ -774,6 +790,7 @@ function initgame()
  spawnthrust()
  generateasteroids()
  initalienship(1)
+ debug = {}
 end
 
 function spawnparticles(position, velocity, maxlifetime, numparticles)
@@ -998,7 +1015,7 @@ function generateasteroids()
  end
 end
 
-function spawnalienship(scale,bulletspeed,minrange,maxrange)
+function spawnalienship(scale,bulletspeed,minrange,maxrange,value)
  alienship = {
   pos = {
    x=0,
@@ -1010,6 +1027,7 @@ function spawnalienship(scale,bulletspeed,minrange,maxrange)
   },
   radius = 5,
   scale = scale,
+  value = value,
   bulletspeed=bulletspeed,
   maxrange = maxrange,
   minrange = minrange,
