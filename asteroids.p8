@@ -113,6 +113,9 @@ function checkbuttons()
  if btnp(4) then 
   fireplayerbullet()
  end
+ if btnp(5) then
+  hyperspace()
+ end
 end
 
 function movepointbyvelocity(object,spd)
@@ -161,8 +164,6 @@ function movealienship()
    end
   end
  end
- debug[1] = leveltimer
- debug[2] = levelcount
 end
 
 function moveasteroid()
@@ -375,6 +376,13 @@ function fireplayerbullet()
    add(playerbullets,bullet)
    sfx(0)
   end
+end
+
+function hyperspace()
+ local x = randomrange(0,127)
+ local y = randomrange(0,127)
+ resetplayership(x,y,ship.rot)
+
 end
 
 function fireenemybullet()
@@ -591,7 +599,7 @@ function doshipkilled()
 end
 
 function doshiprespawn()
- resetplayership()
+ resetplayership(60,60,0)
  gamestate=stateplay
 end
  
@@ -779,6 +787,7 @@ function initgame()
  numasteriods=1
  score=0
  newlevelspd=1
+ leveltimer = 0
  levelcount=1
  asteroids = {}
  playerbullets = {}
@@ -786,7 +795,7 @@ function initgame()
  particles = {}
  shipparts = {}
  playerlives=3
- resetplayership()
+ resetplayership(60,60,0)
  spawnthrust()
  generateasteroids()
  initalienship(1)
@@ -839,22 +848,22 @@ function spawnshipparts(position, velocity, maxlifetime)
  end
 end
 
-function resetplayership()
+function resetplayership(xpos,ypos,rotation)
  if cleared then newlevel() end
  ship = {
   pos = {
-   x=60,
-   y=60
+   x=xpos,
+   y=ypos
   },
   vel= {
    speed =0,
-   direction =0
+   direction = 0
   },
   acc=0.009,
   dec=0.0005,
   rotspeed = .01,
   radius = 5,
-  rot = 0,
+  rot = rotation,
   col = 6,
    points = {
     {x=3,y=0},
