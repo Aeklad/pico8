@@ -3,10 +3,10 @@ version 32
 __lua__
 --init
 --***********changes to alternate pallete
-poke4(0x5f10,0x8382.8180)
-poke4(0x5f14,0x8786.8584)
-poke4(0x5f18,0x8b8a.8988)
-poke4(0x5f1c,0x8f8e.8d8c)
+--poke4(0x5f10,0x8382.8180)
+--poke4(0x5f14,0x8786.8584)
+--poke4(0x5f18,0x8b8a.8988)
+--poke4(0x5f1c,0x8f8e.8d8c)
 --***********sets button press delay to 100
 poke(0x5f5c,100)
 poke(0x5f5d,100)
@@ -141,7 +141,7 @@ function movealienship()
   alienship.spawntimer -=1
   if alienship.spawntimer <= 0 then
    if leveltimer > alienspawninterval/levelcount then
-    spawnalienship(1.8,2,20,40,100)
+    spawnalienship(1.5,2,20,40,100)
    else
     spawnalienship(1,2,50,100,50)
    end
@@ -276,7 +276,6 @@ function checkshiphits()
    if polygoninpolygon(ship,asteroid) then
     spawnshipparts(ship.pos,ship.vel,120)
     explodeasteroid(aindex,asteroid,true)
-    --score=score+(50*asteroid.scale)
     gamestate=stateshipkilled
     break
    end
@@ -286,7 +285,6 @@ function checkshiphits()
   if polygoninpolygon(ship,alienship) then
    if alienship.active then
     explodealien(true)
-    --score+=50
     gamestate=stateshipkilled
    end
   end
@@ -926,11 +924,11 @@ function spawnthrust()
   rotspeed = .01,
   radius = 5,
   rot = 0,
-  col = 6,
+  col = 7,
    points = {
-    {x=-2,y=-1},
-    {x=-4,y=0},
-    {x=-2,y=1}
+    {x=-3,y=-1},
+    {x=-5,y=0},
+    {x=-3,y=1}
   },
  }
 end
@@ -947,7 +945,7 @@ function spawnbullet()
          speed =0,
          direction =0
         },
-        col = 6,
+        col = 7,
 }
 return bullet
 end
@@ -966,7 +964,7 @@ function spawnasteroid(scale)
         dec=.001,
         rotspeed = .01,
         rot =0 ,
-        col = 6,
+        col = 5,
         scale = scale,
         radius = (asteroidrad + asteroidradplus)/scale,
    points = {}
