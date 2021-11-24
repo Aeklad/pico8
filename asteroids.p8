@@ -29,8 +29,9 @@ newlevelspd=1
 leveltimer = 0
 score = 0
 endscreentimer=0
-beat_1=200
-beat_2=100
+hitcounter=0
+beats=0
+bpm=200
 --asteroids
 numasteriods = 1
 asteroidnumpoints =12 
@@ -86,6 +87,7 @@ function _update60()
    end
   end
  end
+ debug[1]=bpm
 end
  
 function _draw()
@@ -226,6 +228,7 @@ end
 function explodeasteroid(index,asteroid,playerkill)
  local pos=asteroid.pos
  local orgscale = asteroid.scale
+ bpm=bpm-4
  deli(asteroids,index)
  local newscale = orgscale*2 
  local newspeed =orgscale*1.1
@@ -411,11 +414,16 @@ function checkrespawn()
 end
 
 function soundtrack()
- if leveltimer%beat_1==0 then
-  sfx(5)
- elseif leveltimer%beat_2==0 then
-  sfx(6)
+ if beats==0 then
+  sfx(5,-1,0,1)
+ elseif beats==bpm/2 then
+  sfx(6,-1,0,1)
  end
+ beats+=1
+ if beats > bpm then
+  beats=0
+ end
+ if bpm < 30 then bpm = 30 end
 end
 
 function randommoveship()
@@ -778,14 +786,12 @@ end
 -->8
 --initialize stuff
 function newlevel()
- sfx(5)
  leveltimer=0
  cleared = false
  levelcount+=1
  newlevelspd+=.1
  numasteriods+=1
- beat_1=100
- beat_2=50
+ bpm=200
  asteroids = {}
  generateasteroids()
  if playerlives > 0 then
@@ -796,8 +802,9 @@ function newlevel()
 end
 
 function initgame()
+ bpm=200
  endscreentimer=950
- numasteriods=1
+ numasteriods=4
  score=0
  newlevelspd=1
  leveltimer = 0
@@ -813,7 +820,6 @@ function initgame()
  generateasteroids()
  initalienship(1)
  debug = {}
- sfx(5)
 end
 
 function spawnparticles(position, velocity, maxlifetime, numparticles)
