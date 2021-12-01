@@ -30,6 +30,7 @@ leveltimer = 0
 score = 0
 endscreentimer=0
 hitcounter=0
+snipe=false
 beats=0
 bpm=200
 --asteroids
@@ -87,7 +88,6 @@ function _update60()
    end
   end
  end
- debug[1]=bpm
 end
  
 function _draw()
@@ -230,7 +230,7 @@ end
 function explodeasteroid(index,asteroid,playerkill)
  local pos=asteroid.pos
  local orgscale = asteroid.scale
- bpm=bpm-4
+ --bpm=bpm-4
  deli(asteroids,index)
  local newscale = orgscale*2 
  local newspeed =orgscale*1.1
@@ -324,7 +324,7 @@ end
 function checkbullethits(bullettype)
  for bindex, bullet in ipairs(bullettype) do
   for aindex, asteroid in ipairs(asteroids) do
-   if checkseparation(bullet.pos,alienship.pos,alienship.radius) then
+   if checkseparation(bullet.pos,alienship.pos,alienship.radius+10) then
     if pointinpolygon(bullet.pos,alienship) then
      if bullettype == playerbullets then
       explodealien(true)
@@ -399,7 +399,11 @@ function fireenemybullet()
    bullet.pos.x=alienship.pos.x
    bullet.pos.y=alienship.pos.y
    bullet.vel.speed=alienship.bulletspeed
-   bullet.vel.direction = rnd(1)
+   if alienship.directiontimer<50 and alienship.directiontimer>20 then
+    bullet.vel.direction = atan2(bullet.pos.x-ship.pos.x,bullet.pos.y-ship.pos.y)+.5
+   else
+    bullet.vel.direction =rnd(1) 
+   end
    add(enemybullets,bullet)
    sfx(4)
   end
@@ -562,7 +566,15 @@ function movenonasteroidstuff()
 end
 
 function doplaygame()
+ debug[1]=alienship.directiontimer 
  leveltimer +=1
+ if leveltimer%100==0 then
+  if leveltimer<500 then
+   bpm=bpm-4
+  else
+   bpm=bpm-8
+  end
+ end
  soundtrack()
  moveship()
  checkbuttons()
@@ -808,7 +820,7 @@ function initgame()
  music(-1)
  bpm=200
  endscreentimer=950
- numasteriods=4
+ numasteriods=1
  score=0
  newlevelspd=1
  leveltimer = 0
@@ -927,7 +939,7 @@ function initalienship(scale)
     {x=7/scale,y=0/scale}
   },
   active = true,
-  spawntimer = randomrange(500,700),
+  spawntimer = randomrange(500,700),-- 500,700
   spawnbullettime = randomrange(20,70),
   directiontimer = randomrange(50,200),
   leftdir={.5,.625,.325},
@@ -1080,7 +1092,7 @@ function spawnalienship(scale,bulletspeed,minrange,maxrange,value)
     {x=7/scale,y=0/scale}
   },
   active = true,
-  spawntimer = randomrange(500,700),
+  spawntimer = randomrange(500,700),--500,700
   spawnbullettime = randomrange(20,70),
   directiontimer = randomrange(50,200),
   leftdir={.5,.625,.325},
