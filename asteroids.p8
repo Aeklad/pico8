@@ -34,7 +34,7 @@ snipe=false
 beats=0
 bpm=200
 --asteroids
-numasteriods = 1
+numasteriods = 4
 asteroidnumpoints =12 
 asteroidrad=12
 asteroidradplus =8 
@@ -56,6 +56,7 @@ playerbulletoffset = {
 --enemy
 maxenemybullets=2
 enemybullettime=55
+offset={}
 
 function _update60()
  cls(0)
@@ -145,11 +146,13 @@ function movealienship()
   alienship.spawntimer -=1
   if alienship.spawntimer <= 0 then
    if leveltimer > alienspawninterval/levelcount then
-    spawnalienship(1.5,2,20,40,100)
+    spawnalienship(1.5,2,50,100,100)--20,40
+    offset={.04,.03,.02,0,.01,.03,.04}
     music(1)
    else
     music(0)
     spawnalienship(1,2,50,100,50)
+    offset={.05,.04,.06,.03,.02,.06,.08}
    end
   end
  else
@@ -393,17 +396,20 @@ end
 
 function fireenemybullet()
  local bullet 
+ local bulletoffset = flr(rnd(7))+1
  if #enemybullets < maxenemybullets then
    bullet = spawnbullet()
    bullet.time=enemybullettime 
    bullet.pos.x=alienship.pos.x
    bullet.pos.y=alienship.pos.y
    bullet.vel.speed=alienship.bulletspeed
-   if alienship.directiontimer<50 and alienship.directiontimer>20 then
-    bullet.vel.direction = atan2(bullet.pos.x-ship.pos.x,bullet.pos.y-ship.pos.y)+.5
-   else
-    bullet.vel.direction =rnd(1) 
-   end
+   --if alienship.directiontimer<50 and alienship.directiontimer>20 then
+    --bullet.vel.direction = atan2(bullet.pos.x-ship.pos.x,bullet.pos.y-ship.pos.y)+.5
+   --else
+    --bullet.vel.direction =rnd(1) 
+   --end
+   bullet.vel.direction = (atan2(bullet.pos.x-ship.pos.x,bullet.pos.y-ship.pos.y)+.5)+offset[bulletoffset]
+   debug[1]=offset[bulletoffset]
    add(enemybullets,bullet)
    sfx(4)
   end
@@ -566,7 +572,6 @@ function movenonasteroidstuff()
 end
 
 function doplaygame()
- debug[1]=alienship.directiontimer 
  leveltimer +=1
  if leveltimer%100==0 then
   if leveltimer<500 then
@@ -820,7 +825,7 @@ function initgame()
  music(-1)
  bpm=200
  endscreentimer=950
- numasteriods=1
+ numasteriods=4
  score=0
  newlevelspd=1
  leveltimer = 0
@@ -895,9 +900,9 @@ function resetplayership(xpos,ypos,rotation)
    speed =0,
    direction = 0
   },
-  acc=0.009,
+  acc=0.02,
   dec=0.0005,
-  rotspeed = .01,
+  rotspeed = .015,
   radius = 5,
   rot = rotation,
   col = 6,
