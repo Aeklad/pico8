@@ -147,7 +147,7 @@ function movealienship()
   if alienship.spawntimer <= 0 then
    if leveltimer > alienspawninterval/levelcount then
     spawnalienship(1.5,2,50,100,100)--20,40
-    offset={.04,.03,.02,0,.01,.03,.04}
+    offset={.03,.02,.0,0,.01,.03,.04}
     music(1)
    else
     music(0)
@@ -403,13 +403,7 @@ function fireenemybullet()
    bullet.pos.x=alienship.pos.x
    bullet.pos.y=alienship.pos.y
    bullet.vel.speed=alienship.bulletspeed
-   --if alienship.directiontimer<50 and alienship.directiontimer>20 then
-    --bullet.vel.direction = atan2(bullet.pos.x-ship.pos.x,bullet.pos.y-ship.pos.y)+.5
-   --else
-    --bullet.vel.direction =rnd(1) 
-   --end
    bullet.vel.direction = (atan2(bullet.pos.x-ship.pos.x,bullet.pos.y-ship.pos.y)+.5)+offset[bulletoffset]
-   debug[1]=offset[bulletoffset]
    add(enemybullets,bullet)
    sfx(4)
   end
@@ -588,6 +582,7 @@ function doplaygame()
  if alienship.active then
   checkalienshiphits()
  end
+ debug[1]=alienship.spawntimer
 end
 
 function doendscreen()
@@ -839,7 +834,8 @@ function initgame()
  resetplayership(60,60,0)
  spawnthrust()
  generateasteroids()
- initalienship(1)
+ spawnalienship(0,0,0,0,0)
+ --initalienship(1)
  debug = {}
 end
 
@@ -913,42 +909,6 @@ function resetplayership(xpos,ypos,rotation)
     {x=-3,y=-2},
     {x=3,y=0}
   },
- }
-end
-
-function initalienship(scale)
- alienship = {
-  pos = {
-   x=0,
-   y=0
-  },
-  vel= {
-   speed =0,
-   direction =0
-  },
-  radius = 5,
-  scale = 1,
-  col = 6,
-   points = {
-    {x=0/scale,y=0/scale},
-    {x=7/scale,y=0/scale},
-    {x=6/scale,y=-1/scale},
-    {x=5/scale,y=-1/scale},
-    {x=4/scale,y=-2/scale},
-    {x=3/scale,y=-2/scale},
-    {x=2/scale,y=-1/scale},
-    {x=1/scale,y=-1/scale},
-    {x=0/scale,y=0/scale},
-    {x=1/scale,y=1/scale},
-    {x=6/scale,y=1/scale},
-    {x=7/scale,y=0/scale}
-  },
-  active = true,
-  spawntimer = randomrange(500,700),-- 500,700
-  spawnbullettime = randomrange(20,70),
-  directiontimer = randomrange(50,200),
-  leftdir={.5,.625,.325},
-  rightdir={0,.125,.825}
  }
 end
 
@@ -1072,7 +1032,7 @@ function spawnalienship(scale,bulletspeed,minrange,maxrange,value)
    y=0
   },
   vel= {
-   speed =0,
+   speed =.5,
    direction =0
   },
   radius = 5,
@@ -1097,14 +1057,12 @@ function spawnalienship(scale,bulletspeed,minrange,maxrange,value)
     {x=7/scale,y=0/scale}
   },
   active = true,
-  spawntimer = randomrange(500,700),--500,700
+  spawntimer = randomrange(200,300),--500,700
   spawnbullettime = randomrange(20,70),
   directiontimer = randomrange(50,200),
   leftdir={.5,.625,.325},
   rightdir={0,.125,.825}
  }
- alienship.spawntimer=randomrange(100,400)
- alienship.vel.speed = .5
  if even() then
   xpos=0
   alienship.vel.direction =0
