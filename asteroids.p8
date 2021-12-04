@@ -15,6 +15,7 @@ statestart=0
 stateplay=10
 stateshipkilled=12
 stateshipkilldelay=15
+statehyperspacedelay=17
 stateleveldelay=18
 stateend=20
 statewaitforrespawn=16
@@ -68,6 +69,8 @@ function _update60()
   movenonplayerstuff()
  elseif gamestate == stateplay then
   doplaygame()
+ elseif gamestate == statehyperspacedelay then
+  dohyperspacedelay()
  elseif gamestate == stateshipkilled then
   doshipkilled()
  elseif gamestate == stateshipkilldelay then
@@ -388,10 +391,10 @@ function fireplayerbullet()
 end
 
 function hyperspace()
- local x = randomrange(0,127)
- local y = randomrange(0,127)
- resetplayership(x,y,ship.rot)
-
+ delaytimer=60
+ --ship.pos.x=400
+ --ship.pos.y=400
+ gamestate=statehyperspacedelay
 end
 
 function fireenemybullet()
@@ -622,7 +625,6 @@ function doshipkilldelay()
  end   
 end
 
-
 function doshipkilled()
  doplaygame()
  playerlives-=1
@@ -642,8 +644,17 @@ function donewleveldelay()
  if delaytimer<=0 then
   newlevel()
  end   
+end
  
-
+function dohyperspacedelay()
+ local x = randomrange(0,127)
+ local y = randomrange(0,127)
+ movenonplayerstuff()
+ delaytimer-=1
+ if delaytimer<=0 then
+  resetplayership(x,y,ship.rot)
+  gamestate=stateplay
+ end   
 end
 
 -->8
@@ -820,7 +831,7 @@ function initgame()
  music(-1)
  bpm=200
  endscreentimer=950
- numasteriods=4
+ numasteriods=1
  score=0
  newlevelspd=1
  leveltimer = 0
@@ -898,7 +909,7 @@ function resetplayership(xpos,ypos,rotation)
   },
   acc=0.02,
   dec=0.0005,
-  rotspeed = .015,
+  rotspeed = .012,
   radius = 5,
   rot = rotation,
   col = 6,
