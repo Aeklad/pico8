@@ -1,4 +1,4 @@
-uico-8 cartridge // http://www.pico-8.com
+pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
 		

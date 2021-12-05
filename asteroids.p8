@@ -456,7 +456,7 @@ end
 function hcenter(s)
  --screen center minus the string length
  --times half a characters width in pixels
- return 64-#s*2
+ return 64-#s*4
 end
 
 function drawlives(x,y,width,length)
