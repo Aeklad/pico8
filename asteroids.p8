@@ -39,6 +39,7 @@ hitcounter=0
 snipe=false
 beats=0
 bpm=200
+gamestarted=false
 --asteroids
 numasteriods = 4
 asteroidnumpoints =12 
@@ -63,7 +64,6 @@ playerbulletoffset = {
 maxenemybullets=2
 enemybullettime=55
 offset={}
-
 function _update60()
  cls(0)
  if gamestate == state_init then
@@ -90,7 +90,7 @@ function _update60()
  elseif gamestate == stateend then
   drawgameinfo()
   doendscreen()
-  if cleared then
+  if cleared and gamestarted then
    delaytimer-=1
    if delaytimer <=0 then
     endgameasteroids()
@@ -265,7 +265,11 @@ function explodeasteroid(index,asteroid,playerkill)
   end
  elseif #asteroids <=0 then
   if gamestate != stateend then
-   endlevel()
+   if gamestate !=statestart then
+    endlevel()
+   else
+    newlevel()
+   end
   else
    cleared=true
    delaytimer=120
@@ -551,9 +555,13 @@ end
 --game states
 
 function dostartscreen()
+ leveltimer+=1
+ playerlives=0
  movenonplayerstuff()
- alienship.spawntimer = 120
- alienship.active=false
+ if alienship.active then
+  checkalienshiphits()
+ end
+ --alienship.active=false
  if gamestate==statestart then
   if btnp(5) then credits +=1 end
  end
@@ -566,6 +574,7 @@ function dostartscreen()
    credits -=1
    initgame()
    alienship.active=false
+   gamestarted=true
    gamestate=stateplay
   end
  end
@@ -627,12 +636,9 @@ function doendscreen()
   initgame()
   gamestate=statestart 
  end
- if credits >=1 then
-  if btnp(4) then
-   initgame()
-   alienship.active =false 
-   gamestate=stateplay
-  end
+ if btnp(4) then
+  initgame()
+  gamestate=statestart 
  end
 end
 
@@ -676,13 +682,19 @@ function donewleveldelay()
 end
  
 function dohyperspacedelay()
+ local dice = randomrange(0,3)
  local x = randomrange(0,127)
  local y = randomrange(0,127)
  movenonplayerstuff()
  delaytimer-=1
  if delaytimer<=0 then
   resetplayership(x,y,ship.rot)
-  gamestate=stateplay
+  if dice==2 then
+   spawnshipparts(ship.pos,ship.vel,120)
+   gamestate=stateshipkilled 
+  else
+   gamestate=stateplay
+  end
  end   
 end
 
@@ -849,10 +861,12 @@ function newlevel()
  bpm=200
  asteroids = {}
  generateasteroids()
- if playerlives > 0 then
-  gamestate=stateplay
- else
-  gamestate=stateend 
+ if gamestate != statestart then
+  if playerlives > 0 then
+   gamestate=stateplay
+  else
+   gamestate=stateend 
+  end
  end
 end
 
@@ -875,6 +889,7 @@ function initgame()
  spawnthrust()
  generateasteroids()
  spawnalienship(0,0,0,0,0)
+ alienship.active=false
  --initalienship(1)
  debug = {}
 end
@@ -927,29 +942,29 @@ end
 
 function resetplayership(xpos,ypos,rotation)
  if cleared then newlevel() end
- ship = {
-  pos = {
-   x=xpos,
-   y=ypos
-  },
-  vel= {
-   speed =0,
-   direction = 0
-  },
-  acc=0.02,
-  dec=0.0005,
-  rotspeed = .012,
-  radius = 5,
-  rot = rotation,
-  col = 6,
-   points = {
-    {x=3,y=0},
-    {x=-3,y=2},
-    {x=-2,y=0},
-    {x=-3,y=-2},
-    {x=3,y=0}
-  },
- }
+  ship = {
+   pos = {
+    x=xpos,
+    y=ypos
+   },
+   vel= {
+    speed =0,
+    direction = 0
+   },
+   acc=0.02,
+   dec=0.0005,
+   rotspeed = .012,
+   radius = 5,
+   rot = rotation,
+   col = 6,
+    points = {
+     {x=3,y=0},
+     {x=-3,y=2},
+     {x=-2,y=0},
+     {x=-3,y=-2},
+     {x=3,y=0}
+   },
+  }
 end
 
 function spawnthrust()
@@ -1096,7 +1111,7 @@ function spawnalienship(scale,bulletspeed,minrange,maxrange,value)
     {x=6/scale,y=1/scale},
     {x=7/scale,y=0/scale}
   },
-  active = true,
+  active = false,
   spawntimer = randomrange(200,300),--500,700
   spawnbullettime = randomrange(20,70),
   directiontimer = randomrange(50,200),
