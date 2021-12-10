@@ -17,12 +17,14 @@ statestart=0
 stateplay=10
 stateshipkilled=12
 stateshipkilldelay=15
+statewaitforrespawn=16
 statehyperspacedelay=17
 stateleveldelay=18
 stateend=20
-statewaitforrespawn=16
+stateentername=25
 gamestate=state_init
 --game stuff
+cartdata("aeklad_asteroids_1")
 screen_max_x=128
 screen_max_y=128
 credits=0
@@ -33,13 +35,16 @@ newlevelspd=1
 leveltimer = 0
 score = 0
 score2 = 0
-hiscore="00"
+hiscore=dget(0)
 endscreentimer=0
 hitcounter=0
 snipe=false
 beats=0
 bpm=200
 gamestarted=false
+char=97
+char1=97
+char2=97
 --asteroids
 numasteriods = 4
 asteroidnumpoints =12 
@@ -292,6 +297,10 @@ end
 
 function updatescore(object,multiplier)
  score=score+(multiplier*object)
+ if score > hiscore then
+  hiscore=score
+ end
+ dset(0,hiscore)
 end
 
 function checkshiphits()
@@ -490,8 +499,9 @@ function drawgameinfo()
  if gamestate!=statestart then
   drawlives(-5,10,1,3)
  end
- spr(48,64,0)
- spr(48,60,0)
+ --spr(48,64,0)
+ --spr(48,60,0)
+ print(hiscore,54,0)
  if score <=0 then 
   print(score..0,8,0)
  else
@@ -623,15 +633,14 @@ function doplaygame()
   checkalienshiphits()
  end
 end
-
 function doendscreen()
  movenonplayerstuff()
  if alienship.active then
   checkalienshiphits()
  end
+ entername()
  hcenter("game over",40)
- --print("press z to start",hcenter("press z to start"),80)
- endscreentimer -= 1
+ --endscreentimer -= 1
  if endscreentimer < 0 then
   initgame()
   gamestate=statestart 
@@ -642,11 +651,20 @@ function doendscreen()
  end
 end
 
-function endlevel()
-  cleared=true
-  delaytimer=120
-  gamestate=stateleveldelay
+function entername()
+ if btn(0) then char+=1 end
+ if btn(1) then char-=1 end
+ if char <=97 then 
+  char=97
+ end
+ if char >=122 then
+  char = 122
+ end
+ hcenter(chr(char)..chr(char)..chr(char),20)
 end
+
+function endlevel()
+  cleared=true delaytimer=120 gamestate=stateleveldelay end
 
 function doshipkilldelay()
  movenonplayerstuff()
