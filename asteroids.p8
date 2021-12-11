@@ -42,10 +42,6 @@ snipe=false
 beats=0
 bpm=200
 gamestarted=false
-char=97
-char1=97
-char2=97
---asteroids
 numasteriods = 4
 asteroidnumpoints =12 
 asteroidrad=12
@@ -638,29 +634,45 @@ function doendscreen()
  if alienship.active then
   checkalienshiphits()
  end
- entername()
- hcenter("game over",40)
+ --hcenter("game over",40)
  --endscreentimer -= 1
  if endscreentimer < 0 then
   initgame()
   gamestate=statestart 
  end
+ if btnp(5) then 
+  place+=1
+ end
+ if place>3 then 
+  place=4
+  storename()
+ end
  if btnp(4) then
   initgame()
   gamestate=statestart 
  end
+ entername(place)
+ drawname()
 end
 
-function entername()
- if btn(0) then char+=1 end
- if btn(1) then char-=1 end
- if char <=97 then 
-  char=97
+function drawname()
+ hcenter(chr(initial[1])..chr(initial[2])..chr(initial[3]),20)
+end
+
+function storename()
+ local newname={initial[1],initial[2],initial[3]}
+ hcenter(chr(newname[1])..chr(newname[2])..chr(newname[3]),40)
+end
+
+function entername(i)
+ if btn(1) then initial[i]+=.1 end
+ if btn(0) then initial[i]-=.1 end
+ if initial[i] <=97 then 
+  initial[i]=97
  end
- if char >=122 then
-  char = 122
+ if initial[i] >=122 then
+  initial[i] = 122
  end
- hcenter(chr(char)..chr(char)..chr(char),20)
 end
 
 function endlevel()
@@ -908,6 +920,9 @@ function initgame()
  generateasteroids()
  spawnalienship(0,0,0,0,0)
  alienship.active=false
+ initial={97,97,97,0}
+ place=1
+--asteroids
  --initalienship(1)
  debug = {}
 end
