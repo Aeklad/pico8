@@ -1,85 +1,52 @@
 pico-8 cartridge // http://www.pico-8.com
+version 33
 __lua__
 
-function init()
- nums= {}
- bricks= {}
- brickcountwidth = 2
- brickcountheight = 2
- for i=0, brickcountheight, 1 do
-  for j=0, brickcountwidth, 1 do
-   local brick = {
-    x= 50+j*9,
-    y= 50+i*9,
-    width=3,
-    height=3,
-    c=1
-   }
-   add(bricks,brick)
-  end
- end
- --create numbers
- for i=0, brickcountheight, 1 do
-  for j=0, brickcountwidth, 1 do
-   local num = {
-    x=80+j*8,
-    y=50+i*8,
-    n=i,
-   }
-   add(nums,num)
-  end
- end
-end
-function drawmatrix()
- local m=0
- for b in all(bricks) do
-  m=m+8 
-  print(b.x,m,10)
-  print(b.y,m,30)
-  print(b.width,m,50)
-  print(b.height,m,70)
-  rect(b.x,
-       b.y,
-       b.width,
-       b.height,
-       b.c)
-      end
-     end
-version 18
-__lua__
-pixels ={}
-col=3
-row=6
-w=2
-h=2
-c1=0
-c2=1
-eight={1,4,7,9,10,12,13,16,17,19,20,22,25,28}
 
-function led(table,_x,_y,_c1,_c2)
- for i = 0, col do
-  for j = 0, row do
-  local pixel = {
-   x=_x+i*4,
-   y=_y+j*4,
-   c=_c1
-  }
-   add(table,pixel)
-  end
- end
- for k, v in pairs(table) do
-  rectfill(v.x,v.y,v.x+w,v.y+h,_c1)
- end
- for n in all(eight) do
-  del(table,table[n])
- end
+function _init()
+ hiscore=1000
+ hiscore_table={first}
+ initial={97,97,97,0}
+ place=1
 end
-
 function _update()
- cls()
- led(pixels,20,20,1,2)
+ entername(place)
+end
+function drawname()
+ hcenter(chr(initial[1])..chr(initial[2])..chr(initial[3]),20)
+end
+
+function storename()
+ return {initial[1],initial[2],initial[3]}
+end
+
+function hcenter(s,y)
+ --screen center minus the string length
+ --times half a characters width in pixels
+ print(s,64-#s*4,y)
+end
+
+function entername(i)
+ if btn(1) then initial[i]+=.1 end
+ if btn(0) then initial[i]-=.1 end
+ if initial[i] <=97 then 
+  initial[i]=97
+ end
+ if initial[i] >=122 then
+  initial[i] = 122
+ end
 end
 function _draw()
+ cls()
+ drawname()
+ if btnp(5) then 
+  place+=1
+ end
+ if place>3 then 
+  place=4
+  newname=storename()
+  hcenter(chr(newname[1])..chr(newname[2])..chr(newname[3]),60)
+ end
  
 end
 

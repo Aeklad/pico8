@@ -645,7 +645,8 @@ function doendscreen()
  end
  if place>3 then 
   place=4
-  storename()
+  newname=storename()
+  hcenter(chr(newname[1])..chr(newname[2])..chr(newname[3]),60)
  end
  if btnp(4) then
   initgame()
@@ -660,8 +661,7 @@ function drawname()
 end
 
 function storename()
- local newname={initial[1],initial[2],initial[3]}
- hcenter(chr(newname[1])..chr(newname[2])..chr(newname[3]),40)
+ return {initial[1],initial[2],initial[3]}
 end
 
 function entername(i)
