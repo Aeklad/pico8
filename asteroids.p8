@@ -36,6 +36,9 @@ leveltimer = 0
 score = 0
 score2 = 0
 hiscore=dget(0)
+hiscore_list={}
+name_list={}
+score_list={}
 endscreentimer=0
 hitcounter=0
 snipe=false
@@ -629,6 +632,7 @@ function doplaygame()
   checkalienshiphits()
  end
 end
+
 function doendscreen()
  movenonplayerstuff()
  if alienship.active then
@@ -658,6 +662,10 @@ end
 
 function drawname()
  hcenter(chr(initial[1])..chr(initial[2])..chr(initial[3]),20)
+end
+
+function build_list(i)
+ hiscore_list = {name_list,score_list}
 end
 
 function storename()
