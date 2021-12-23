@@ -35,6 +35,9 @@ newlevelspd=1
 leveltimer = 0
 score = 0
 score2 = 0
+names={}
+scores={}
+hiscore_list={names,scores}
 hiscore=dget(0)
 hiscore_list={}
 name_list={}
@@ -92,7 +95,6 @@ function _update60()
  elseif gamestate == stateleveldelay then
   donewleveldelay()
  elseif gamestate == stateend then
-  drawgameinfo()
   doendscreen()
   if cleared and gamestarted then
    delaytimer-=1
@@ -113,6 +115,7 @@ function _draw()
  drawbullets(enemybullets)
  drawasteroids()
  drawgameinfo()
+ print_hi_score(#names)
  for txt in all(debug) do
   print(txt,0,50,8)
  end
@@ -649,15 +652,30 @@ function doendscreen()
  end
  if place>3 then 
   place=4
-  newname=storename()
-  hcenter(chr(newname[1])..chr(newname[2])..chr(newname[3]),60)
- end
- if btnp(4) then
-  initgame()
-  gamestate=statestart 
+  fill_hi_score()
+  if btnp(4) then
+   initgame()
+   gamestate=statestart 
+  end
  end
  entername(place)
  drawname()
+end
+
+function fill_hi_score()
+  newname = tostring((chr(initial[1])..chr(initial[2])..chr(initial[3])))
+  add(names,newname)
+  add(scores,score)
+  hiscore_list={names,scores}
+end
+
+function print_hi_score(n)
+ if n >=1 then
+  for i=1,n do
+   --print(hiscore_list[1][n].."  "..hiscore_list[2][n],n)
+   print(names[n],64,64)
+  end
+ end
 end
 
 function drawname()
