@@ -112,7 +112,6 @@ function _draw()
  drawbullets(enemybullets)
  drawasteroids()
  drawgameinfo()
- print_hi_score(#names)
  for txt in all(debug) do
   print(txt,0,50,8)
  end
@@ -648,7 +647,11 @@ function doendscreen()
  end
  if place>3 then 
   place=4
-  fill_hi_score()
+  if not toggle then
+   toggle=true
+   fill_hi_score()
+  end
+  print_hi_score(#names)
   if btnp(4) then
    initgame()
    gamestate=statestart 
@@ -666,11 +669,9 @@ function fill_hi_score()
 end
 
 function print_hi_score(n)
- if n >=1 then
-  for i=1,n do
-   --print(hiscore_list[1][n].."  "..hiscore_list[2][n],n)
-   print(names[n],64,64)
-  end
+ for i=1,n do
+  hcenter(hiscore_list[1][i].." "..hiscore_list[2][i],30+i*10)
+  --print(names[n],64,64)
  end
 end
 
@@ -924,6 +925,7 @@ function initgame()
  endscreentimer=950
  numasteriods=1
  score=0
+ toggle=false
  newlevelspd=1
  leveltimer = 0
  levelcount=1
