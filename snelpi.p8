@@ -14,7 +14,30 @@ xo=6
 yo=7
 xr=flr(rnd(21))*xo
 yr=flr(rnd(18))*yo
-
+fr={133,134,135,136,137,138,140,141,143,146,147}
+fruit=1+flr(rnd(#fr-1))
+cl={1,2,3,4,8,9,10,11,12,13,14,15}
+colr=1+flr(rnd(#cl-1))
+function artificialdumness()
+ if x*xo<xr then 
+  dx=1
+  dy=0
+ elseif x*xo> xr then
+  dx=-1
+  dy=0
+ else
+  dx=0
+ end
+ if y*yo<yr then
+  dy=1
+  dx=0
+ elseif y*yo>yr then
+  dy=-1
+  dx=0
+ else
+  dy=0
+ end
+end
 function _draw()
  cls()
  
@@ -48,6 +71,8 @@ x=x%32
 if x==xr/xo and y==yr/yo then
    xr=flr(rnd(21))*xo
    yr=flr(rnd(18))*yo
+   fruit=1+flr(rnd(#fr-1))
+   colr=1+flr(rnd(#cl-1))
    l+=1
  end
 
@@ -73,7 +98,8 @@ end
  
  print("웃",x*xo,y*yo,10)
  
- print("●",xr,yr,11)
+ print(chr(fr[fruit]),xr,yr,cl[colr])
+ artificialdumness()
  
 end
 __gfx__

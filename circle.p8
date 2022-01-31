@@ -47,6 +47,7 @@ function length(p1,p2)
 	return sqrt(lx*lx + ly*ly)
 		
 end
+
 															
 
 function move(n,spd)

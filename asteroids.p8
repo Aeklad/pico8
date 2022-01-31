@@ -666,7 +666,8 @@ function doendscreen()
 end
 
 function fill_hi_score()
-  newname = tostring((chr(initial[1])..chr(initial[2])..chr(initial[3])))
+  --newname = tostring((chr(initial[1])..chr(initial[2])..chr(initial[3])))
+  newname= chr(initial[1],initial[2],initial[3])
   add(names,newname)
   add(scores,score)
   hiscore_list={names,scores}
