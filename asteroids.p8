@@ -37,7 +37,7 @@ score = 0
 score2 = 0
 names={}
 scores={}
-hiscore_list={names,scores}
+--hiscore_list={names,scores}
 hiscore=dget(0)
 hiscore_list={}
 name_list={}
@@ -655,7 +655,7 @@ function doendscreen()
    toggle=true
    fill_hi_score()
   end
-  print_hi_score(#names)
+  print_hi_score()
   if btnp(4) then
    initgame()
    gamestate=statestart 
@@ -666,18 +666,20 @@ function doendscreen()
 end
 
 function fill_hi_score()
-  --newname = tostring((chr(initial[1])..chr(initial[2])..chr(initial[3])))
-  newname= chr(initial[1],initial[2],initial[3])
-  add(names,newname)
-  add(scores,score)
-  hiscore_list={names,scores}
+  newname= chr(initial[1])..chr(initial[2])..chr(initial[3])
+  add(hiscore_list,newname)
+  add(hiscore_list,score)
+  --hiscore_list=sort(hiscore_list)
+  --add(names,newname)
+  --add(scores,score)
+  --scores=sort(scores)
+  --hiscore_list={names,scores}
 end
 
-function print_hi_score(n)
- for i=1,n do
-  hcenter(hiscore_list[1][i].." "..hiscore_list[2][i],30+i*10)
-  --print(names[n],64,64)
- end
+function print_hi_score()
+ --for i=1,n do
+  hcenter(hiscore_list[1].." "..hiscore_list[2],30+1*10)
+ --end
 end
 
 function drawname()
@@ -908,6 +910,26 @@ function randomrange(a,b)
  return (a+flr(rnd(b)))
 end
 
+function sort(s)
+ local na={}
+ while #s>0 do
+  for i=2,#s,2 do
+   local b = true
+   for j=2,#s,2 do
+    b=b and s[i]>=s[j]
+   end
+   if b then
+    add(na,s[i-1])
+    add(na,s[i])
+    del(s,s[i])
+    del(s,s[i-1])
+    break
+   end
+  end
+ end
+ return(na)
+end
+
 -->8
 --initialize stuff
 function newlevel()
@@ -929,6 +951,7 @@ function newlevel()
 end
 
 function initgame()
+ ta={3,-1,100,2,4,7,99,4,-10}
  music(-1)
  bpm=200
  endscreentimer=950
@@ -951,8 +974,6 @@ function initgame()
  alienship.active=false
  initial={97,97,97,0}
  place=1
---asteroids
- --initalienship(1)
  debug = {}
 end
 
