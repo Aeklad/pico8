@@ -35,9 +35,6 @@ newlevelspd=1
 leveltimer = 0
 score = 0
 score2 = 0
-names={}
-scores={}
---hiscore_list={names,scores}
 hiscore=dget(0)
 hiscore_list={}
 name_list={}
@@ -652,8 +649,8 @@ function doendscreen()
  if place>3 then 
   place=4
   if not toggle then
-   toggle=true
    fill_hi_score()
+   toggle=true
   end
   print_hi_score()
   if btnp(4) then
@@ -666,28 +663,33 @@ function doendscreen()
 end
 
 function fill_hi_score()
+  names={}
+  scores={}
   newname= chr(initial[1])..chr(initial[2])..chr(initial[3])
   add(hiscore_list,newname)
   add(hiscore_list,score)
-  --hiscore_list=sort(hiscore_list)
-  --add(names,newname)
-  --add(scores,score)
-  --scores=sort(scores)
-  --hiscore_list={names,scores}
+  hiscore_list=sort(hiscore_list)
+  build_list(hiscore_list,names,scores)
+  sorted_hiscore_list={names,scores}
 end
 
 function print_hi_score()
- --for i=1,n do
-  hcenter(hiscore_list[1].." "..hiscore_list[2],30+1*10)
- --end
+ for i=1,#sorted_hiscore_list[1] do
+  print(sorted_hiscore_list[1][i].." "..sorted_hiscore_list[2][i],36,30+i*10)
+ end
 end
 
 function drawname()
  hcenter(chr(initial[1])..chr(initial[2])..chr(initial[3]),20)
 end
 
-function build_list(i)
- hiscore_list = {name_list,score_list}
+function build_list(list,list1,list2)
+ for i=1,#list,2 do
+  add(list1,list[i])
+ end
+ for i=2,#list,2 do
+  add(list2,list[i])
+ end
 end
 
 function storename()
