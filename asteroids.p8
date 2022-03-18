@@ -21,9 +21,10 @@ statewaitforrespawn=16
 statehyperspacedelay=17
 stateleveldelay=18
 stateend=20
-stateentername=25
 gamestate=state_init
 --game stuff
+names={}
+scores={}
 cartdata("aeklad_asteroids_1")
 screen_max_x=128
 screen_max_y=128
@@ -37,6 +38,7 @@ score = 0
 score2 = 0
 hiscore=dget(0)
 hiscore_list={}
+sorted_hiscore_list={}
 name_list={}
 score_list={}
 endscreentimer=0
@@ -54,7 +56,7 @@ asteroidmaxvel=.25
 asteroidminvel=.05
 asteroidmaxrot=.005
 --player
-playerlives=3
+playerlives=1
 delaytimer=0
 respawnpos= {x=60,y=60}
 maxplayerbullets=4
@@ -575,6 +577,9 @@ function dostartscreen()
  end
  if credits <=0 then
   hcenter("1 coin 1 play",100)
+  if #sorted_hiscore_list > 0 then
+   if sin(time()*.08)>0 then print_hi_score() end
+  end
  else
  --print("asteroids", hcenter("asteroids"),60)
   if sin(time()*.5)>0 then hcenter("push start",20) end
@@ -638,11 +643,17 @@ function doendscreen()
   checkalienshiphits()
  end
  --hcenter("game over",40)
- --endscreentimer -= 1
+ if toggle then
+  endscreentimer -= 1
+ end
  if endscreentimer < 0 then
   initgame()
   gamestate=statestart 
  end
+ enter_hiscore()
+end
+
+function enter_hiscore()
  if btnp(5) then 
   place+=1
  end
@@ -659,18 +670,24 @@ function doendscreen()
   end
  end
  entername(place)
- drawname()
+ if not toggle then
+  drawname()
+ end
 end
 
 function fill_hi_score()
-  names={}
-  scores={}
-  newname= chr(initial[1])..chr(initial[2])..chr(initial[3])
-  add(hiscore_list,newname)
-  add(hiscore_list,score)
-  hiscore_list=sort(hiscore_list)
-  build_list(hiscore_list,names,scores)
-  sorted_hiscore_list={names,scores}
+ names={}
+ scores={}
+ newname= chr(initial[1])..chr(initial[2])..chr(initial[3])
+ add(hiscore_list,newname)
+ add(hiscore_list,score)
+ hiscore_list=sort(hiscore_list)
+ if #hiscore_list>11 then
+  del(hiscore_list,hiscore_list[#hiscore_list])
+  del(hiscore_list,hiscore_list[#hiscore_list])
+ end
+ build_list(hiscore_list,names,scores)
+ sorted_hiscore_list={names,scores}
 end
 
 function print_hi_score()
@@ -690,10 +707,6 @@ function build_list(list,list1,list2)
  for i=2,#list,2 do
   add(list2,list[i])
  end
-end
-
-function storename()
- return {initial[1],initial[2],initial[3]}
 end
 
 function entername(i)
@@ -956,7 +969,7 @@ function initgame()
  ta={3,-1,100,2,4,7,99,4,-10}
  music(-1)
  bpm=200
- endscreentimer=950
+ endscreentimer=250
  numasteriods=1
  score=0
  toggle=false
@@ -968,7 +981,7 @@ function initgame()
  enemybullets = {}
  particles = {}
  shipparts = {}
- playerlives=3
+ playerlives=1
  resetplayership(60,60,0)
  spawnthrust()
  generateasteroids()
