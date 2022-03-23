@@ -173,6 +173,11 @@ function movealienship()
   alienship.spawnbullettime-=1
   alienship.directiontimer -=1
   alienship.pos = movepointbyvelocity(alienship,1)
+  if alienship.pos.x>=128 then
+   alienship.active=false
+  elseif alienship.pos.x<=0 then
+   alienship.active=false
+  end
   wrapposition(alienship)
   if alienship.spawnbullettime <= 0 then
    fireenemybullet()
@@ -1212,16 +1217,16 @@ function spawnalienship(scale,bulletspeed,minrange,maxrange,value)
   active = false,
   spawntimer = randomrange(200,300),--500,700
   spawnbullettime = randomrange(20,70),
-  directiontimer = randomrange(50,200),
+  directiontimer = randomrange(25,100),--50,200
   leftdir={.5,.625,.325},
   rightdir={0,.125,.825}
  }
  if even() then
   xpos=0
-  alienship.vel.direction =0
+  alienship.vel.direction =alienship.rightdir[randomrange(1,3)]
  else
   xpos=120
-  alienship.vel.direction =.5
+  alienship.vel.direction =alienship.leftdir[randomrange(1,3)]
  end
  alienship.active=true
  alienship.pos = {x=xpos,y=rnd(128)}
