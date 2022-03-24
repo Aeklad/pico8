@@ -20,6 +20,7 @@ stateshipkilldelay=15
 statewaitforrespawn=16
 statehyperspacedelay=17
 stateleveldelay=18
+stateplayerstart=19
 stateend=20
 gamestate=state_init
 --game stuff
@@ -78,6 +79,8 @@ function _update60()
  elseif gamestate == statestart then
   --movenonplayerstuff()
   dostartscreen()
+ elseif gamestate == stateplayerstart then
+  doplayerstart()
  elseif gamestate == stateplay then
   doplaygame()
  elseif gamestate == statehyperspacedelay then
@@ -489,8 +492,10 @@ function drawlives(x,y,width,length)
 end
 
 function drawasteroids()
- for index, asteroid in ipairs(asteroids) do
-  drawshape(asteroid)
+ if gamestate!=stateplayerstart then
+  for index, asteroid in ipairs(asteroids) do
+   drawshape(asteroid)
+  end
  end
 end
 
@@ -593,7 +598,7 @@ function dostartscreen()
    initgame()
    alienship.active=false
    gamestarted=true
-   gamestate=stateplay
+   gamestate=stateplayerstart
   end
  end
 end
@@ -621,6 +626,14 @@ function movenonasteroidstuff()
  --checkbullethitsalien()
  checkbuttons()
  moveship()
+end
+
+function doplayerstart()
+ hcenter("player start",50)
+ playerstartdelay-=1
+ if playerstartdelay<=0 then
+  gamestate=stateplay
+ end
 end
 
 function doplaygame()
@@ -726,11 +739,17 @@ function entername(i)
 end
 
 function endlevel()
-  cleared=true delaytimer=120 gamestate=stateleveldelay end
+ cleared=true
+ delaytimer=120
+ gamestate=stateleveldelay
+end
 
 function doshipkilldelay()
  movenonplayerstuff()
  delaytimer-=1
+ if playerlives <=0 then
+  hcenter("game over",50)
+ end
  if delaytimer==0 then
   if playerlives <= 0 then
    gamestate= stateend 
@@ -994,6 +1013,7 @@ function initgame()
  alienship.active=false
  initial={97,97,97,0}
  place=1
+ playerstartdelay=100
  debug = {}
 end
 
