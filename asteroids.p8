@@ -39,7 +39,9 @@ score = 0
 score2 = 0
 hiscore=dget(0)
 hiscore_list={}
-sorted_hiscore_list={}
+sorted_hiscore_list={{},{}}
+sorted_hiscore_list[1][1]=0 
+sorted_hiscore_list[2][1]=0 
 name_list={}
 score_list={}
 endscreentimer=0
@@ -668,7 +670,13 @@ function doendscreen()
   initgame()
   gamestate=statestart 
  end
- enter_hiscore()
+ if #sorted_hiscore_list[2]<5 then
+  enter_hiscore()
+ elseif score > sorted_hiscore_list[2][#sorted_hiscore_list[2]] then
+  enter_hiscore()
+ else
+  gamestate=statestart
+ end
 end
 
 function enter_hiscore()
@@ -700,17 +708,20 @@ function fill_hi_score()
  add(hiscore_list,newname)
  add(hiscore_list,score)
  hiscore_list=sort(hiscore_list)
- if #hiscore_list>11 then
-  del(hiscore_list,hiscore_list[#hiscore_list])
-  del(hiscore_list,hiscore_list[#hiscore_list])
+ if #hiscore_list>10 then
+  for i=1,2 do
+   del(hiscore_list,hiscore_list[#hiscore_list])
+  end
  end
  build_list(hiscore_list,names,scores)
  sorted_hiscore_list={names,scores}
 end
 
 function print_hi_score()
- for i=1,#sorted_hiscore_list[1] do
-  print(sorted_hiscore_list[1][i].." "..sorted_hiscore_list[2][i],36,30+i*10)
+ if sorted_hiscore_list[2][1]>0 then
+  for i=1,#sorted_hiscore_list[1] do
+   print(sorted_hiscore_list[1][i].." "..sorted_hiscore_list[2][i],36,30+i*10)
+  end
  end
 end
 
