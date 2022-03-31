@@ -603,6 +603,8 @@ function dostartscreen()
    gamestate=stateplayerstart
   end
  end
+ if credits >1 then credits=1 end
+ if credits <0 then credits=0 end
 end
 
 function movenonplayerstuff()
@@ -670,14 +672,14 @@ function doendscreen()
   initgame()
   gamestate=statestart 
  end
- if #sorted_hiscore_list[2]<5 then
-  enter_hiscore()
- elseif score > sorted_hiscore_list[2][#sorted_hiscore_list[2]] then
+ if #sorted_hiscore_list[2]<5 or 
+    score>sorted_hiscore_list[2][#sorted_hiscore_list[2]] then 
   enter_hiscore()
  else
   gamestate=statestart
  end
 end
+
 
 function enter_hiscore()
  if btnp(5) then 
@@ -686,6 +688,12 @@ function enter_hiscore()
  if place>3 then 
   place=4
   if not toggle then
+   if #sorted_hiscore_list[2]>=5 and 
+   score > sorted_hiscore_list[2][#sorted_hiscore_list[2]] then
+    for i=1,2 do
+     del(hiscore_list,hiscore_list[#hiscore_list])
+    end
+   end
    fill_hi_score()
    toggle=true
   end
@@ -708,11 +716,6 @@ function fill_hi_score()
  add(hiscore_list,newname)
  add(hiscore_list,score)
  hiscore_list=sort(hiscore_list)
- if #hiscore_list>10 then
-  for i=1,2 do
-   del(hiscore_list,hiscore_list[#hiscore_list])
-  end
- end
  build_list(hiscore_list,names,scores)
  sorted_hiscore_list={names,scores}
 end
@@ -739,13 +742,13 @@ function build_list(list,list1,list2)
 end
 
 function entername(i)
- if btn(1) then initial[i]+=.1 end
- if btn(0) then initial[i]-=.1 end
- if initial[i] <=97 then 
-  initial[i]=97
- end
- if initial[i] >=122 then
-  initial[i] = 122
+ if btn(1) and time()%.5==0 then initial[i]+=1 end
+ if btn(0) and time()%.5==0 then initial[i]-=1 end
+ if initial[i] <97 then 
+  initial[i]=122
+ elseif 
+  initial[i] >122 then
+  initial[i] = 97 
  end
 end
 
