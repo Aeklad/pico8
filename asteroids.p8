@@ -120,7 +120,7 @@ function _draw()
  drawasteroids()
  drawgameinfo()
  for txt in all(debug) do
-  print(txt,0,50,8)
+  print(txt)
  end
 end
 
@@ -577,6 +577,7 @@ end
 --game states
 
 function dostartscreen()
+ flashtime+=.001
  leveltimer+=1
  playerlives=0
  movenonplayerstuff()
@@ -590,7 +591,7 @@ function dostartscreen()
  if credits <=0 then
   hcenter("1 coin 1 play",100)
   if #sorted_hiscore_list > 0 then
-   if sin(time()*.08)>0 then print_hi_score() end
+   if sin(flashtime)<0 then print_hi_score() end
   end
  else
  --print("asteroids", hcenter("asteroids"),60)
@@ -688,13 +689,16 @@ function enter_hiscore()
  if place>3 then 
   place=4
   if not toggle then
-   if #sorted_hiscore_list[2]>=5 and 
-   score > sorted_hiscore_list[2][#sorted_hiscore_list[2]] then
+   fill_hi_score()
+   if #hiscore_list>10 and 
+   score > hiscore_list[#hiscore_list] then
     for i=1,2 do
      del(hiscore_list,hiscore_list[#hiscore_list])
     end
+    del(sorted_hiscore_list[1],sorted_hiscore_list[1][#sorted_hiscore_list[1]])
+    
+    del(sorted_hiscore_list[2],sorted_hiscore_list[2][#sorted_hiscore_list[2]])
    end
-   fill_hi_score()
    toggle=true
   end
   print_hi_score()
@@ -708,7 +712,12 @@ function enter_hiscore()
   drawname()
  end
 end
-
+--todo
+--build a table from sorted_hiscore_list
+--that converts letters back to 3 ascii numbers followed by
+--respective score
+--ie JAM 100 would be {96,97,98,100}
+--or just use hiscore_list and sort it upon reload
 function fill_hi_score()
  names={}
  scores={}
@@ -1004,6 +1013,7 @@ function newlevel()
 end
 
 function initgame()
+ flashtime=0
  ta={3,-1,100,2,4,7,99,4,-10}
  music(-1)
  bpm=200
