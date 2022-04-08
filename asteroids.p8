@@ -1,78 +1,87 @@
 pico-8 cartridge // http://www.pico-8.com
 version 33
 __lua__
---init
---***********changes to alternate pallete
---poke4(0x5f10,0x8382.8180)
---poke4(0x5f14,0x8786.8584)
---poke4(0x5f18,0x8b8a.8988)
---poke4(0x5f1c,0x8f8e.8d8c)
---***********sets button press delay to 100
-poke(0x5f5c,100)
-poke(0x5f5d,100)
-poke(0x5f58,0x81)
+function _init()
+ --init
+ --***********changes to alternate pallete
+ --poke4(0x5f10,0x8382.8180)
+ --poke4(0x5f14,0x8786.8584)
+ --poke4(0x5f18,0x8b8a.8988)
+ --poke4(0x5f1c,0x8f8e.8d8c)
+ --***********sets button press delay to 100
+ poke(0x5f5c,100)
+ poke(0x5f5d,100)
+ poke(0x5f58,0x81)
 
---states
-statestart=0
-stateplay=10
-stateshipkilled=12
-stateshipkilldelay=15
-statewaitforrespawn=16
-statehyperspacedelay=17
-stateleveldelay=18
-stateplayerstart=19
-stateend=20
-gamestate=state_init
---game stuff
-names={}
-scores={}
-cartdata("aeklad_asteroids_1")
-screen_max_x=128
-screen_max_y=128
-credits=0
-cleared=false
-levelcount =1
-alienspawninterval = 4000
-newlevelspd=1
-leveltimer = 0
-score = 0
-score2 = 0
-hiscore=dget(0)
-hiscore_list={}
-sorted_hiscore_list={{},{}}
-sorted_hiscore_list[1][1]=0 
-sorted_hiscore_list[2][1]=0 
-name_list={}
-score_list={}
-endscreentimer=0
-hitcounter=0
-snipe=false
-beats=0
-bpm=200
-gamestarted=false
-numasteriods = 4
-asteroidnumpoints =12 
-asteroidrad=12
-asteroidradplus =8 
-asteroidradminus=7
-asteroidmaxvel=.25
-asteroidminvel=.05
-asteroidmaxrot=.005
---player
-playerlives=1
-delaytimer=0
-respawnpos= {x=60,y=60}
-maxplayerbullets=4
-playerbulletspeed=2
-playerbullettime=55
-playerbulletoffset = {
- x=2,
- y=0
-}
---enemy
-maxenemybullets=2
-enemybullettime=55
-offset={}
+ --states
+ statestart=0
+ stateplay=10
+ stateshipkilled=12
+ stateshipkilldelay=15
+ statewaitforrespawn=16
+ statehyperspacedelay=17
+ stateleveldelay=18
+ stateplayerstart=19
+ stateend=20
+ gamestate=state_init
+ --game stuff
+ names={}
+ scores={}
+ cartdata("aeklad_asteroids_1")
+ screen_max_x=128
+ screen_max_y=128
+ credits=0
+ cleared=false
+ levelcount =1
+ alienspawninterval = 4000
+ newlevelspd=1
+ leveltimer = 0
+ score = 0
+ score2 = 0
+ hiscore=dget(0)
+ hiscore_list={}
+ sorted_hiscore_list={{},{}}
+ sorted_hiscore_list[1][1]=0 
+ sorted_hiscore_list[2][1]=0 
+ name_list={}
+ scorerestore={}
+ for i=1,20 do
+  scorerestore[i]=dget(i)
+ end
+ hiscore_list=tbl_to_string(scorerestore)
+ build_list(hiscore_list,names,scores)
+ sorted_hiscore_list={names,scores}
+ endscreentimer=0
+ hitcounter=0
+ snipe=false
+ beats=0
+ bpm=200
+ gamestarted=false
+ numasteriods = 4
+ asteroidnumpoints =12 
+ asteroidrad=12
+ asteroidradplus =8 
+ asteroidradminus=7
+ asteroidmaxvel=.25
+ asteroidminvel=.05
+ asteroidmaxrot=.005
+ --player
+ playerlives=1
+ delaytimer=0
+ respawnpos= {x=60,y=60}
+ maxplayerbullets=4
+ playerbulletspeed=2
+ playerbullettime=55
+ playerbulletoffset = {
+  x=2,
+  y=0
+ }
+ --enemy
+ maxenemybullets=2
+ enemybullettime=55
+ offset={}
+end
+
 function _update60()
  cls(0)
  if gamestate == state_init then
@@ -122,6 +131,9 @@ function _draw()
  for txt in all(debug) do
   print(txt)
  end
+ debug[1]=sin(flashtime)
+ debug[2]=#hiscore_list
+ debug[3]=#sorted_hiscore_list[1]
 end
 
 -->8
@@ -590,8 +602,8 @@ function dostartscreen()
  end
  if credits <=0 then
   hcenter("1 coin 1 play",100)
-  if #sorted_hiscore_list > 0 then
-   if sin(flashtime)<0 then print_hi_score() end
+  if #hiscore_list > 0 then
+   if sin(flashtime)<=0 then print_hi_score() end
   end
  else
  --print("asteroids", hcenter("asteroids"),60)
@@ -665,7 +677,6 @@ function doendscreen()
  if alienship.active then
   checkalienshiphits()
  end
- --hcenter("game over",40)
  if toggle then
   endscreentimer -= 1
  end
@@ -680,7 +691,6 @@ function doendscreen()
   gamestate=statestart
  end
 end
-
 
 function enter_hiscore()
  if btnp(5) then 
@@ -712,12 +722,7 @@ function enter_hiscore()
   drawname()
  end
 end
---todo
---build a table from sorted_hiscore_list
---that converts letters back to 3 ascii numbers followed by
---respective score
---ie JAM 100 would be {96,97,98,100}
---or just use hiscore_list and sort it upon reload
+
 function fill_hi_score()
  names={}
  scores={}
@@ -725,6 +730,7 @@ function fill_hi_score()
  add(hiscore_list,newname)
  add(hiscore_list,score)
  hiscore_list=sort(hiscore_list)
+ savedscores=savescores(hiscore_list)
  build_list(hiscore_list,names,scores)
  sorted_hiscore_list={names,scores}
 end
@@ -759,6 +765,55 @@ function entername(i)
   initial[i] >122 then
   initial[i] = 97 
  end
+end
+
+function str_to_ascii(str)
+ local tbl={}
+ for i=1,#str do
+  add(tbl,ord(sub(str,i,i)))
+ end
+ return(tbl)
+end
+
+function ascii_to_str(tbl)
+ local string=""
+ for i=1,3 do
+  string=string..chr(tbl[i])
+ end
+ return string
+end
+
+function tbl_to_string(tbl)
+ nt={}
+ for i=1,#tbl,4 do
+  tbl[i]=chr(tbl[i])..chr(tbl[i+1])..chr(tbl[i+2])
+  add(nt,tbl[i])
+  add(nt,tbl[i+3])
+ end
+ return(nt)
+end
+
+function tbl_to_ascii(tbl)
+ local nt={}
+ for i=1,#tbl do
+  if i%2!=0 then
+   local numtbl=str_to_ascii(tbl[i])
+   for j=1,#numtbl do
+    add(nt,numtbl[j])
+   end
+  else
+   add(nt,tbl[i])
+  end 
+ end
+ return(nt)
+end
+
+function savescores()
+ local nt=tbl_to_ascii(hiscore_list)
+ for i=1,#nt do
+  dset(i,nt[i])
+ end
+ return nt
 end
 
 function endlevel()
