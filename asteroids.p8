@@ -28,6 +28,9 @@ function _init()
  names={}
  scores={}
  cartdata("aeklad_asteroids_1")
+ --for i=0,255 do
+  --dset(i,nil)
+ --end
  screen_max_x=128
  screen_max_y=128
  credits=0
@@ -45,8 +48,16 @@ function _init()
  sorted_hiscore_list[2][1]=0 
  name_list={}
  scorerestore={}
+ length={}
  for i=1,20 do
-  scorerestore[i]=dget(i)
+  if dget(i)>0 then 
+   add(length,i)
+  end
+ end
+ if dget(0) > 0 then
+  for i=1,#length do
+   scorerestore[i]=dget(i)
+  end
  end
  hiscore_list=tbl_to_string(scorerestore)
  build_list(hiscore_list,names,scores)
@@ -55,7 +66,7 @@ function _init()
  hitcounter=0
  snipe=false
  beats=0
- bpm=200
+ bpm=20
  gamestarted=false
  numasteriods = 4
  asteroidnumpoints =12 
@@ -131,9 +142,6 @@ function _draw()
  for txt in all(debug) do
   print(txt)
  end
- debug[1]=sin(flashtime)
- debug[2]=#hiscore_list
- debug[3]=#sorted_hiscore_list[1]
 end
 
 -->8
@@ -531,11 +539,11 @@ function drawgameinfo()
  else
   print(score,8,0)
  end
- if score2 <=0 then 
-  print(score2..0,104,0)
- else
-  print(score2,104,0)
- end
+ --if score2 <=0 then 
+  --print(score2..0,104,0)
+ --else
+  --print(score2,104,0)
+ --end
 end
 
 function drawbullets(bullettype)
@@ -1027,6 +1035,8 @@ function randomrange(a,b)
  return (a+flr(rnd(b)))
 end
 
+--todo try the swap sort method
+--maybe you only need to look at the lowest value in the table
 function sort(s)
  local na={}
  while #s>0 do
