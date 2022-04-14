@@ -59,6 +59,7 @@ function _init()
    scorerestore[i]=dget(i)
   end
  end
+ places={1,2,3,4,5}
  hiscore_list=tbl_to_string(scorerestore)
  build_list(hiscore_list,names,scores)
  sorted_hiscore_list={names,scores}
@@ -737,13 +738,22 @@ function fill_hi_score()
  newname= chr(initial[1])..chr(initial[2])..chr(initial[3])
  add(hiscore_list,newname)
  add(hiscore_list,score)
- hiscore_list=sort(hiscore_list)
+ --hiscore_list=sort(hiscore_list)
  savedscores=savescores(hiscore_list)
  build_list(hiscore_list,names,scores)
  sorted_hiscore_list={names,scores}
+ 
 end
 
 function print_hi_score()
+ sort(sorted_hiscore_list[2],sorted_hiscore_list[1])
+ if #sorted_hiscore_list[2]>5 then
+  for i=1,2 do
+   del(hiscore_list,hiscore_list[#hiscore_list])
+  end
+  del(sorted_hiscore_list[1],sorted_hiscore_list[1][#sorted_hiscore_list[1]])
+  del(sorted_hiscore_list[2],sorted_hiscore_list[2][#sorted_hiscore_list[2]])
+ end
  if sorted_hiscore_list[2][1]>0 then
   for i=1,#sorted_hiscore_list[1] do
    print(sorted_hiscore_list[1][i].." "..sorted_hiscore_list[2][i],36,30+i*10)
@@ -1035,27 +1045,43 @@ function randomrange(a,b)
  return (a+flr(rnd(b)))
 end
 
---todo try the swap sort method
---maybe you only need to look at the lowest value in the table
-function sort(s)
- local na={}
- while #s>0 do
-  for i=2,#s,2 do
-   local b = true
-   for j=2,#s,2 do
-    b=b and s[i]>=s[j]
-   end
-   if b then
-    add(na,s[i-1])
-    add(na,s[i])
-    del(s,s[i])
-    del(s,s[i-1])
-    break
+--todo fix savescores
+function swap(a,b,tbl)
+ local temp=tbl[a]
+ tbl[a]=tbl[b]
+ tbl[b]=temp
+end
+ 
+function sort(tbl,tbl2)
+ for ci=1,#tbl do
+  for i=1,#tbl-1 do
+   if tbl[i]<tbl[i+1] then
+    swap(i,i+1,tbl)
+    swap(i,i+1,tbl2)
    end
   end
  end
- return(na)
 end
+
+--function sort(s)
+ --local na={}
+ --while #s>0 do
+  --for i=2,#s,2 do
+   --local b = true
+   --for j=2,#s,2 do
+    --b=b and s[i]>=s[j]
+   --end
+   --if b then
+    --add(na,s[i-1])
+    --add(na,s[i])
+    --del(s,s[i])
+    --del(s,s[i-1])
+    --break
+   --end
+  --end
+ --end
+ --return(na)
+--end
 
 -->8
 --initialize stuff
