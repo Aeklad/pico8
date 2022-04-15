@@ -709,15 +709,15 @@ function enter_hiscore()
   place=4
   if not toggle then
    fill_hi_score()
-   if #hiscore_list>10 and 
-   score > hiscore_list[#hiscore_list] then
-    for i=1,2 do
-     del(hiscore_list,hiscore_list[#hiscore_list])
-    end
-    del(sorted_hiscore_list[1],sorted_hiscore_list[1][#sorted_hiscore_list[1]])
+ --  if #hiscore_list>10 and 
+  -- score > hiscore_list[#hiscore_list] then
+   -- for i=1,2 do
+    -- del(hiscore_list,hiscore_list[#hiscore_list])
+    --end
+    --del(sorted_hiscore_list[1],sorted_hiscore_list[1][#sorted_hiscore_list[1]])
     
-    del(sorted_hiscore_list[2],sorted_hiscore_list[2][#sorted_hiscore_list[2]])
-   end
+    --del(sorted_hiscore_list[2],sorted_hiscore_list[2][#sorted_hiscore_list[2]])
+   --end
    toggle=true
   end
   print_hi_score()
@@ -739,7 +739,6 @@ function fill_hi_score()
  add(hiscore_list,newname)
  add(hiscore_list,score)
  --hiscore_list=sort(hiscore_list)
- savedscores=savescores(hiscore_list)
  build_list(hiscore_list,names,scores)
  sorted_hiscore_list={names,scores}
  
@@ -1046,6 +1045,8 @@ function randomrange(a,b)
 end
 
 --todo fix savescores
+--how to sort hiscore_list
+--create a function to rebuild it from sorted_hiscore_list
 function swap(a,b,tbl)
  local temp=tbl[a]
  tbl[a]=tbl[b]
@@ -1062,6 +1063,7 @@ function sort(tbl,tbl2)
   end
  end
 end
+
 
 --function sort(s)
  --local na={}
