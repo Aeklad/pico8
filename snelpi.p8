@@ -1,6 +1,8 @@
 pico-8 cartridge // http://www.pico-8.com
 version 34
 __lua__
+-->8
+--init
 x=15
 y=8
 dx=1
@@ -18,6 +20,8 @@ fr={133,134,135,136,137,138,140,141,143,146,147}
 fruit=1+flr(rnd(#fr-1))
 cl={1,2,3,4,8,9,10,11,12,13,14,15}
 colr=1+flr(rnd(#cl-1))
+-->8
+--functions
 function artificialdumness()
  if x*xo<xr then 
   dx=1
@@ -38,6 +42,8 @@ function artificialdumness()
   dy=0
  end
 end
+-->8
+--draw
 function _draw()
  cls()
  
