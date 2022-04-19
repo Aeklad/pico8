@@ -729,18 +729,25 @@ function fill_hi_score()
  newname= chr(initial[1])..chr(initial[2])..chr(initial[3])
  add(hiscore_list,newname)
  add(hiscore_list,score)
+ sort_hi(hiscore_list)
  build_list(hiscore_list,names,scores)
  sorted_hiscore_list={names,scores}
 end
 
 function print_hi_score()
- sort(sorted_hiscore_list[2],sorted_hiscore_list[1])
+ for i=1,#hiscore_list-1 do
+  print(hiscore_list[i].." "..hiscore_list[i+1],36,30+i*10)
+ end
+end
+
+function print_hi_score_bak()
+ --sort(sorted_hiscore_list[2],sorted_hiscore_list[1])
  if #sorted_hiscore_list[2]>5 then
-  --for i=1,2 do
-  -- del(hiscore_list,hiscore_list[#hiscore_list])
-  --end
   del(sorted_hiscore_list[1],sorted_hiscore_list[1][#sorted_hiscore_list[1]])
   del(sorted_hiscore_list[2],sorted_hiscore_list[2][#sorted_hiscore_list[2]])
+  for i=1,2 do
+   del(hiscore_list,hiscore_list[#hiscore_list])
+  end
  end
  if sorted_hiscore_list[2][1]>0 then
   for i=1, #sorted_hiscore_list[1] do
@@ -754,20 +761,6 @@ function drawname()
  hcenter(chr(initial[1])..chr(initial[2])..chr(initial[3]),20)
 end
 
-function sort_hi()
- local nt={}
- while #nt < #sorted_hiscore_list[2]*2 do
-  for i=1,#sorted_hiscore_list[1] do
-   add (nt,sorted_hiscore_list[1][i])
-   break
-  end
-  for j=1,#sorted_hiscore_list[2] do
-   add(nt,sorted_hiscore_list[2][i])
-   break
-  end
- end
- return(nt)
-end
 
 function build_list(list,list1,list2)
  for i=1,#list,2 do
@@ -1048,7 +1041,7 @@ end
 function randomrange(a,b)
  return (a+flr(rnd(b)))
 end
-
+--todo sort hiscore_list swapping 2 concecutive elemens 
 --don't delete till after print
 --create a function to rebuild it from sorted_hiscore_list
 function swap(a,b,tbl)
@@ -1068,6 +1061,16 @@ function sort(tbl,tbl2)
  end
 end
 
+function sort_hi(tbl)
+ for ci=2,#tbl,2 do
+  for i=2,#tbl-2,2 do
+   if tbl[i]<tbl[i+2] then
+    swap(i,i+2,tbl)
+    swap(i-1,i+1,tbl)
+   end
+  end
+ end
+end
 
 --function sort(s)
  --local na={}
