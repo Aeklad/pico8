@@ -43,10 +43,6 @@ function _init()
  score2 = 0
  hiscore=dget(0)
  hiscore_list={}
- sorted_hiscore_list={{},{}}
- sorted_hiscore_list[1][1]=0 
- sorted_hiscore_list[2][1]=0 
- name_list={}
  scorerestore={}
  length={}
  for i=1,20 do
@@ -61,8 +57,6 @@ function _init()
  end
  places={1,2,3,4,5}
  hiscore_list=tbl_to_string(scorerestore)
- build_list(hiscore_list,names,scores)
- sorted_hiscore_list={names,scores}
  endscreentimer=0
  hitcounter=0
  snipe=false
@@ -532,19 +526,12 @@ function drawgameinfo()
  if gamestate!=statestart then
   drawlives(-5,10,1,3)
  end
- --spr(48,64,0)
- --spr(48,60,0)
  print(hiscore,54,0)
  if score <=0 then 
   print(score..0,8,0)
  else
   print(score,8,0)
  end
- --if score2 <=0 then 
-  --print(score2..0,104,0)
- --else
-  --print(score2,104,0)
- --end
 end
 
 function drawbullets(bullettype)
@@ -615,7 +602,6 @@ function dostartscreen()
    if sin(flashtime)<=0 then print_hi_score() end
   end
  else
- --print("asteroids", hcenter("asteroids"),60)
   if sin(time()*.5)>0 then hcenter("push start",20) end
   if btnp(4) then
    credits -=1
@@ -693,8 +679,8 @@ function doendscreen()
   initgame()
   gamestate=statestart 
  end
- if #sorted_hiscore_list[2]<5 or 
-    score>sorted_hiscore_list[2][#sorted_hiscore_list[2]] then 
+ if #hiscore_list<10 or 
+    score>hiscore_list[#hiscore_list] then 
   enter_hiscore()
  else
   gamestate=statestart
@@ -730,45 +716,26 @@ function fill_hi_score()
  add(hiscore_list,newname)
  add(hiscore_list,score)
  sort_hi(hiscore_list)
- build_list(hiscore_list,names,scores)
- sorted_hiscore_list={names,scores}
-end
-
-function print_hi_score()
- for i=1,#hiscore_list-1 do
-  print(hiscore_list[i].." "..hiscore_list[i+1],36,30+i*10)
- end
-end
-
-function print_hi_score_bak()
- --sort(sorted_hiscore_list[2],sorted_hiscore_list[1])
- if #sorted_hiscore_list[2]>5 then
-  del(sorted_hiscore_list[1],sorted_hiscore_list[1][#sorted_hiscore_list[1]])
-  del(sorted_hiscore_list[2],sorted_hiscore_list[2][#sorted_hiscore_list[2]])
+ if #hiscore_list>10 then
   for i=1,2 do
    del(hiscore_list,hiscore_list[#hiscore_list])
-  end
- end
- if sorted_hiscore_list[2][1]>0 then
-  for i=1, #sorted_hiscore_list[1] do
-   print(sorted_hiscore_list[1][i].." "..sorted_hiscore_list[2][i],36,30+i*10)
   end
  end
  savescores()
 end
 
-function drawname()
- hcenter(chr(initial[1])..chr(initial[2])..chr(initial[3]),20)
+function print_hi_score()
+ for i=1,#hiscore_list do
+  if i%2 != 0 then
+   print(hiscore_list[i],36,30+i*5)
+  else
+   print(hiscore_list[i],66,30+(i-1)*5)
+  end
+ end
 end
 
-
-function build_list(list,list1,list2)
- for i=1,#list,2 do
-  add(list1,list[i])
- end
- for i=2,#list,2 do
-  add(list2,list[i])
- end
+function drawname()
+ hcenter(chr(initial[1])..chr(initial[2])..chr(initial[3]),20)
 end
 
 function entername(i)
@@ -1041,24 +1008,11 @@ end
 function randomrange(a,b)
  return (a+flr(rnd(b)))
 end
---todo sort hiscore_list swapping 2 concecutive elemens 
---don't delete till after print
---create a function to rebuild it from sorted_hiscore_list
+
 function swap(a,b,tbl)
  local temp=tbl[a]
  tbl[a]=tbl[b]
  tbl[b]=temp
-end
- 
-function sort(tbl,tbl2)
- for ci=1,#tbl do
-  for i=1,#tbl-1 do
-   if tbl[i]<tbl[i+1] then
-    swap(i,i+1,tbl)
-    swap(i,i+1,tbl2)
-   end
-  end
- end
 end
 
 function sort_hi(tbl)
@@ -1071,26 +1025,6 @@ function sort_hi(tbl)
   end
  end
 end
-
---function sort(s)
- --local na={}
- --while #s>0 do
-  --for i=2,#s,2 do
-   --local b = true
-   --for j=2,#s,2 do
-    --b=b and s[i]>=s[j]
-   --end
-   --if b then
-    --add(na,s[i-1])
-    --add(na,s[i])
-    --del(s,s[i])
-    --del(s,s[i-1])
-    --break
-   --end
-  --end
- --end
- --return(na)
---end
 
 -->8
 --initialize stuff
