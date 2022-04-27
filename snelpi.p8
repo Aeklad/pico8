@@ -29,6 +29,7 @@ function _init()
  gameover=2
  state=title
  t=0
+ distance=abs(x*xo-xr)>abs(y*yo-yr)
 end
 
 function init_play()
@@ -50,6 +51,15 @@ function init_play()
 end
 
 function artificialdumness()
+ if y*yo<yr then
+  dy=1
+  dx=0
+ elseif y*yo>yr then
+  dy=-1
+  dx=0
+ else
+  dy=0
+ end
  if x*xo<xr then 
   dx=1
   dy=0
@@ -59,14 +69,17 @@ function artificialdumness()
  else
   dx=0
  end
- if y*yo<yr then
-  dy=1
-  dx=0
- elseif y*yo>yr then
-  dy=-1
-  dx=0
- else
+end
+
+function ternary()
+ if distance then
   dy=0
+  dx=x*xo<xr and 1 or -1 
+  distance=x*xo != xr
+ else
+  dx=0
+  dy=y*yo<yr and 1 or -1
+  distance=y*yo != yr
  end
 end
 
@@ -84,11 +97,12 @@ function _update()
  y=y%21
 
  if x==xr/xo and y==yr/yo then
-   xr=6+flr(rnd(18))*xo
-   yr=6+flr(rnd(18))*yo
-   fruit=1+flr(rnd(#fr-1))
-   colr=1+flr(rnd(#cl-1))
-   l+=1
+  xr=6+flr(rnd(18))*xo
+  yr=6+flr(rnd(18))*yo
+  fruit=1+flr(rnd(#fr-1))
+  colr=1+flr(rnd(#cl-1))
+  l+=1
+  distance=abs(x*xo-xr)>abs(y*yo-yr)
  end
 
  if t==s then
@@ -104,7 +118,8 @@ function _update()
   bc=l
  end
  if state==title then
-  artificialdumness()
+  --artificialdumness()
+  ternary()
   if btnp(4) then
    init_play()
    state=playing
@@ -167,6 +182,7 @@ function _draw()
   print("welcome to snelpscii snake",12,10,bc)
   print("press x to play",30,20,bc)
  end
+ print(distance)
 end
 __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
