@@ -51,35 +51,14 @@ function init_play()
 end
 
 function artificialdumness()
- if y*yo<yr then
-  dy=1
-  dx=0
- elseif y*yo>yr then
-  dy=-1
-  dx=0
- else
-  dy=0
- end
- if x*xo<xr then 
-  dx=1
-  dy=0
- elseif x*xo> xr then
-  dx=-1
-  dy=0
- else
-  dx=0
- end
-end
-
-function ternary()
  if distance then
   dy=0
   dx=x*xo<xr and 1 or -1 
-  distance=x*xo != xr
+  distance=x*xo==xr and true 
  else
   dx=0
   dy=y*yo<yr and 1 or -1
-  distance=y*yo != yr
+  distance=y*yo==yr and true 
  end
 end
 
@@ -118,8 +97,7 @@ function _update()
   bc=l
  end
  if state==title then
-  --artificialdumness()
-  ternary()
+  artificialdumness()
   if btnp(4) then
    init_play()
    state=playing
@@ -182,7 +160,6 @@ function _draw()
   print("welcome to snelpscii snake",12,10,bc)
   print("press x to play",30,20,bc)
  end
- print(distance)
 end
 __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
