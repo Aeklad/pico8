@@ -3,12 +3,12 @@ version 33
 __lua__
 poke (24364,3)
 player1= {
-           turn=-1,
+           turn=1,
            shot=false,
            score=0
           }
 player2= {
-           turn=-1,
+           turn=1,
            shot=false,
            score=0
           }
@@ -23,9 +23,7 @@ stateshoot=3
 state2player=4
 statetitle=5
 t=0
-p1=false
-p2=false
-
+shooting=false
 
 function _init()
  c=0
@@ -71,18 +69,30 @@ function shoot()
   t=0
   player1.shot=false
   player2.shot=false
+  shooting=false
   gamestate=stateplay
  end
 end
 
-function draw_count()
+function draw_play()
  if t>15 then
   spr(1,4,32)
   spr(1,50,32,1,1,1)
- elseif c==0 then
-  spr(player1.turn,4,32)
-  spr(player2.turn,50,32,1,1,1)
+ elseif c==0 then 
+  if not player2.shot then
+   spr(player2.turn,4,32)
+  end
+  if not player1.shot then
+   spr(player1.turn,50,32,1,1,1)
+  end
+ end
+ if player1.shot and c==0 then
+  print("ready",40,32,3)
  end 
+ if player2.shot and c==0 then
+  print("ready",0,32,3)
+ end 
+
 end
 
 function play(w)
@@ -93,12 +103,11 @@ function play(w)
  end
 end
 
-
---need to allow only one button input per round
 function read_input(pl)
  if not players[pl+1].shot then
   for i=0,2 do
    if btnp(i,pl) then
+    shooting=true
     players[pl+1].shot=true
     if i==0 then
      turns[pl+1]=1
@@ -112,7 +121,9 @@ function read_input(pl)
   end
  end
  if player1.shot and player2.shot then
-  gamestate=stateshoot
+  if timer() then
+   gamestate=stateshoot
+  end
  end
 end
 
@@ -145,15 +156,19 @@ function _update()
   read_input(1)
  elseif gamestate==state2player then
  elseif gamestate==stateshoot then
-  shoot()
+   shoot()
  end
 end
  
 function _draw()
  cls()
- print (player1.score,5,0)
- print (player2.score,53,0)
- draw_count()
+ print (player2.score,5,0,7)
+ print (player1.score,53,0)
+ print (c)
+ print (player1.shot)
+ print (player2.shot)
+ print (gamestate)
+ draw_play()
 end
 __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
