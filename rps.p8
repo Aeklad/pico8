@@ -24,6 +24,7 @@ state2player=4
 statetitle=5
 t=0
 shooting=false
+multiplay=false
 
 function _init()
  c=0
@@ -31,7 +32,7 @@ function _init()
  wn=-1
  turns={player1.turn,player2.turn}
  players={player1,player2}
- gamestate=stateplay
+ gamestate=statetitle 
 end
 
 function cpuplay()
@@ -70,12 +71,17 @@ function shoot()
   player1.shot=false
   player2.shot=false
   shooting=false
-  gamestate=stateplay
+  gamestate=multiplay and state2player or stateplay
  end
 end
 
+function draw_title()
+ print("z for 1 player")
+ print("x for 2 player")
+end
+
 function draw_play()
- if t>15 then
+ if t>15 and c>=1 then
   spr(1,4,32)
   spr(1,50,32,1,1,1)
  elseif c==0 then 
@@ -86,13 +92,14 @@ function draw_play()
    spr(player1.turn,50,32,1,1,1)
   end
  end
- if player1.shot and c==0 then
-  print("ready",40,32,3)
- end 
- if player2.shot and c==0 then
-  print("ready",0,32,3)
- end 
-
+ if multiplay then
+  if player1.shot and c==0 then
+   print("ready",42,36,3)
+  end 
+  if player2.shot and c==0 then
+   print("ready",0,36,3)
+  end 
+ end
 end
 
 function play(w)
@@ -122,20 +129,15 @@ function read_input(pl)
  end
  if player1.shot and player2.shot then
   if timer() then
-   gamestate=stateshoot
+   gamestate=stateshoot 
   end
  end
 end
 
-function human_play()
- 
-end
-
- 
-
 function singleplay()
   for i=0,2 do
    if btnp(i) then
+    player1.shot=true
     if i==0 then
      player1.turn=1
     elseif i == 1 then 
@@ -143,6 +145,7 @@ function singleplay()
     else
      player1.turn = i
     end
+    player2.shot=true
     player2.turn=cpuplay()
     gamestate=stateshoot
    end
@@ -150,11 +153,20 @@ function singleplay()
 end
 
 function _update()
+ if gamestate==statetitle then
+  if btnp(4) then
+   gamestate=stateplay
+  elseif
+   btnp(5) then
+    multiplay=true
+    gamestate=state2player
+   end
+  end
  if gamestate==stateplay then
-  --singleplay()
+  singleplay()
+ elseif gamestate==state2player then
   read_input(0)
   read_input(1)
- elseif gamestate==state2player then
  elseif gamestate==stateshoot then
    shoot()
  end
@@ -162,13 +174,13 @@ end
  
 function _draw()
  cls()
- print (player2.score,5,0,7)
- print (player1.score,53,0)
- print (c)
- print (player1.shot)
- print (player2.shot)
- print (gamestate)
- draw_play()
+ if gamestate==statetitle then
+  draw_title()
+ else
+  print (player2.score,5,0,7)
+  print (player1.score,53,0)
+  draw_play()
+ end
 end
 __gfx__
 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
