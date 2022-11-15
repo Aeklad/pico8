@@ -63,7 +63,6 @@ function _init()
  beats=0
  bpm=20
  gamestarted=false
- numasteriods = 4
  asteroidnumpoints =12 
  asteroidrad=12
  asteroidradplus =8 
@@ -94,7 +93,6 @@ function _update60()
   initgame()
   gamestate = statestart 
  elseif gamestate == statestart then
-  --movenonplayerstuff()
   dostartscreen()
  elseif gamestate == stateplayerstart then
   doplayerstart()
@@ -169,7 +167,6 @@ end
 function moveship()
  ship.vel.speed -= ship.dec
  if ship.vel.speed < 0 then ship.vel.speed =0 end
- 
  ship.pos = movepointbyvelocity(ship,1)
  wrapposition(ship)
  thrustjet.pos = ship.pos
@@ -272,7 +269,6 @@ end
 function explodeasteroid(index,asteroid,playerkill)
  local pos=asteroid.pos
  local orgscale = asteroid.scale
- --bpm=bpm-4
  deli(asteroids,index)
  local newscale = orgscale*2 
  local newspeed =orgscale*1.1
@@ -398,18 +394,6 @@ function checkbullethits(bullettype)
  end
 end
 
-function checkbullethitsalien()
- for bindex, bullet in ipairs(playerbullets) do
-   if checkseparation(bullet.pos,alienship.pos,alienship.radius) then
-    if pointinpolygon(bullet.pos,alienship) then
-     explodealien()
-     --score+=50
-     break
-   end
-  end
- end
-end
-
 function thrust()
  local acc = {
   speed = ship.acc,
@@ -436,8 +420,6 @@ end
 
 function hyperspace()
  delaytimer=60
- --ship.pos.x=400
- --ship.pos.y=400
  gamestate=statehyperspacedelay
 end
 
@@ -478,19 +460,6 @@ function soundtrack()
   beats=0
  end
  if bpm < 30 then bpm = 30 end
-end
-
-function randommoveship()
- local t=0
- t+=1
- if t%(flr(rnd(10)+20))==0 then
-  speed = rnd(7)
-  if t%2==0 then 
-   ship.rot=rnd(1)
-  end
- end
- checkbuttons()
- moveship()
 end
 
 -->8
@@ -624,7 +593,6 @@ function movenonplayerstuff()
  movebullet(enemybullets)
  checkbullethits(playerbullets)
  checkbullethits(enemybullets)
- --checkbullethitsalien()
 end
 
 function movenonasteroidstuff()
@@ -635,7 +603,6 @@ function movenonasteroidstuff()
  movealienship()
  checkbullethits(playerbullets)
  checkbullethits(enemybullets)
- --checkbullethitsalien()
  checkbuttons()
  moveship()
 end
@@ -694,6 +661,11 @@ function enter_hiscore()
  if place>3 then 
   place=4
   if not toggle then
+   if #hiscore_list>=10 then
+    for i=1,2 do
+     del(hiscore_list,hiscore_list[#hiscore_list])
+    end
+   end
    fill_hi_score()
    toggle=true
   end
@@ -716,11 +688,6 @@ function fill_hi_score()
  add(hiscore_list,newname)
  add(hiscore_list,score)
  sort_hi(hiscore_list)
- if #hiscore_list>10 then
-  for i=1,2 do
-   del(hiscore_list,hiscore_list[#hiscore_list])
-  end
- end
  savescores()
 end
 
