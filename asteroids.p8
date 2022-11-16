@@ -28,9 +28,12 @@ function _init()
  names={}
  scores={}
  cartdata("aeklad_asteroids_1")
- --for i=0,255 do
-  --dset(i,nil)
- --end
+ function clear_cart()
+  for i=0,255 do
+   dset(i,nil)
+  end
+ end
+ --clear_cart()
  screen_max_x=128
  screen_max_y=128
  credits=0
@@ -646,12 +649,20 @@ function doendscreen()
   initgame()
   gamestate=statestart 
  end
- if #hiscore_list<10 or 
-    score>hiscore_list[#hiscore_list] then 
+ 
+ if score>0 and score > hiscore_list[#hiscore_list] then 
   enter_hiscore()
  else
   gamestate=statestart
  end
+end
+
+function trim(a)
+ local temp={}
+ for i=1,10 do
+  add(temp,a[i])
+ end
+ return temp
 end
 
 function enter_hiscore()
@@ -661,11 +672,6 @@ function enter_hiscore()
  if place>3 then 
   place=4
   if not toggle then
-   if #hiscore_list>=10 then
-    for i=1,2 do
-     del(hiscore_list,hiscore_list[#hiscore_list])
-    end
-   end
    fill_hi_score()
    toggle=true
   end
@@ -688,6 +694,9 @@ function fill_hi_score()
  add(hiscore_list,newname)
  add(hiscore_list,score)
  sort_hi(hiscore_list)
+ if #hiscore_list>=10 then
+  hiscore_list=trim(hiscore_list)
+ end
  savescores()
 end
 
