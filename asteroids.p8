@@ -177,6 +177,7 @@ end
 
 function movealienship()
  if not alienship.active then
+  music(-1)
   alienship.spawntimer -=1
   if alienship.spawntimer <= 0 then
    if leveltimer > alienspawninterval/levelcount then
@@ -311,7 +312,7 @@ function explodealien(playerkill)
   alienship.active = false
   deli(playerbullets,bindex)
   sfx(1)
-  music(-1)
+  --music(-1)
   spawnshipparts(alienship.pos,alienship.vel,120)
   if playerkill then
    updatescore(alienship.value,1)
