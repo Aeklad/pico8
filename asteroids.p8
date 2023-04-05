@@ -59,7 +59,13 @@ function _init()
   end
  end
  places={1,2,3,4,5}
- hiscore_list=tbl_to_string(scorerestore)
+
+ if #scorerestore<1 then
+  hiscore_list={}
+ else
+  hiscore_list=tbl_to_string(scorerestore)
+ end
+
  endscreentimer=0
  hitcounter=0
  snipe=false
@@ -650,11 +656,18 @@ function doendscreen()
   initgame()
   gamestate=statestart 
  end
- 
- if score>0 and score > hiscore_list[#hiscore_list] then 
+ if #hiscore_list>0 then
+  checkscore()
+ else
+  enter_hiscore()
+ end
+end
+
+function checkscore()
+ if score>hiscore_list[#hiscore_list] then
   enter_hiscore()
  else
-  gamestate=statestart
+  gamestate=statestart 
  end
 end
 
